@@ -113,13 +113,27 @@ def t_newline(t):
 
 # Manejo de errores
 def t_error(t):
-    print(f"Error: Unexpected character '{t.value[0]}' in row {t.lineno}, column {find_column(t)}")
+    # Inicializar lista de errores si no existe
+    if not hasattr(t.lexer, 'errors'):
+        t.lexer.errors = []
+    
+    # Calcular columna
+    column = find_column(t.lexer.lexdata, t.lexpos)
+    
+    # Guardar el mensaje de error
+    error_msg = f"Error: Unexpected character '{t.value[0]}' in row {t.lineno}, column {column}"
+    t.lexer.errors.append(error_msg)
+    
+    # Saltar el caracter problemático
     t.lexer.skip(1)
 
 # Función para calcular la columna
-def find_column(input, token):
-    line_start = input.rfind('\n', 0, token.lexpos) + 1
-    return (token.lexpos - line_start) + 1
+def find_column(input_str, lexpos):
+    """Calcula la columna basada en la posición en el texto de entrada"""
+    last_cr = input_str.rfind('\n', 0, lexpos)
+    if last_cr < 0:
+        last_cr = 0
+    return (lexpos - last_cr) + 1
 
 # Construir el lexer
 lexer = lex.lex()
@@ -140,8 +154,27 @@ def main():
         
         lexer.input(data)
         
+        # Lista para almacenar errores
+        errors = []
+        
+        # Tokenizar y capturar errores
+        while True:
+            tok = lexer.token()
+            if not tok: 
+                break  # No hay más tokens
+            
+            # Si es un error, se maneja en t_error()
+        
+        # Si hay errores, imprimirlos y salir
+        if hasattr(lexer, 'errors') and lexer.errors:
+            for error in lexer.errors:
+                print(error)
+            sys.exit(1)
+        
+        # Si no hay errores, procesar tokens normalmente
+        lexer.input(data)  # Reiniciamos el lexer
         for token in lexer:
-            print(f"{token.type} {token.lineno} {find_column(data, token)}", end='')
+            print(f"{token.type} {token.lineno} {find_column(data, token.lexpos)}", end='')
             if token.type in ['TkId', 'TkNum', 'TkString']:
                 print(f"({token.value})")
             else:
