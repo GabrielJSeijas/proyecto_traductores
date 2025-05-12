@@ -1,0 +1,7 @@
+{
+    if x <= 10 {
+        print "Hola mundo"
+    }
+    y := x * 2;
+    // Esto es un comentario
+}
