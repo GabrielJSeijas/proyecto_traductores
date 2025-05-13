@@ -121,7 +121,7 @@ def t_error(t):
     column = find_column(t.lexer.lexdata, t.lexpos)
     
     # Guardar el mensaje de error
-    error_msg = f"Error: Unexpected character '{t.value[0]}' in row {t.lineno}, column {column}"
+    error_msg = f'Error: Unexpected character "{t.value[0]}" in row {t.lineno}, column {column}'
     t.lexer.errors.append(error_msg)
     
     # Saltar el caracter problemático
@@ -174,11 +174,11 @@ def main():
         # Si no hay errores, procesar tokens normalmente
         lexer.input(data)  # Reiniciamos el lexer
         for token in lexer:
-            print(f"{token.type} {token.lineno} {find_column(data, token.lexpos)}", end='')
+            print(f"{token.type}", end=' ')
             if token.type in ['TkId', 'TkNum', 'TkString']:
-                print(f"({token.value})")
-            else:
-                print()
+                print(f"(\"{token.value}\")", end=' ')
+            print(f"{token.lineno} {find_column(data, token.lexpos)}")
+           
                 
     except FileNotFoundError:
         print(f"Error: No se pudo abrir el archivo {filename}")

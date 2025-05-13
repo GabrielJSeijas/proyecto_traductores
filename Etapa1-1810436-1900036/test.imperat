@@ -1,7 +1,7 @@
 {
-    if x <= 10 {
-        print "Hola mundo"
-    }@
-    y := x * 2;
-    // Esto es un comentario
+    int a, b, c;
+    function[..2] d, e, f;
+    a := b + 3;@
+    print e
+// Esto es un comentario. Debe ser ignorado.
 }
