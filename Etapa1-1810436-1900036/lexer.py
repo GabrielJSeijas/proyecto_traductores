@@ -11,10 +11,10 @@ tokens = [
     'TkId', 'TkNum', 'TkString',
     
     # Símbolos
-    'Tk0Block', 'TkCBlock', 'TkSoForth', 'TkComma', 'TkOpenPar', 'TkClosePar',
+    'TkOBlock', 'TkCBlock', 'TkSoForth', 'TkComma', 'TkOpenPar', 'TkClosePar',
     'TkAsig', 'TkSemicolon', 'TkArrow', 'TkGuard', 'TkPlus', 'TkMinus', 'TkMult',
     'TkOr', 'TkAnd', 'TkNot', 'TkLess', 'TkLeq', 'TkGeq', 'TkGreater', 'TkEqual',
-    'TkNEqual', 'Tk0Bracket', 'TkCBracket', 'TkTwoPoints', 'TkApp'
+    'TkNEqual', 'TkOBracket', 'TkCBracket', 'TkTwoPoints', 'TkApp'
 ]
 
 # Palabras reservadas (mapeo a tokens)
@@ -33,7 +33,7 @@ reserved = {
 }
 
 # Expresiones regulares para tokens simples
-t_Tk0Block = r'\{'
+t_TkOBlock = r'\{'
 t_TkCBlock = r'\}'
 t_TkComma = r','
 t_TkOpenPar = r'\('
@@ -45,7 +45,7 @@ t_TkMult = r'\*'
 t_TkNot = r'!'
 t_TkLess = r'<'
 t_TkGreater = r'>'
-t_Tk0Bracket = r'\['
+t_TkOBracket = r'\['
 t_TkCBracket = r'\]'
 t_TkTwoPoints = r'\.'
 t_TkApp = r'\.'
@@ -83,10 +83,6 @@ def t_TkNEqual(t):
     r'<>'
     return t
 
-def t_TkString(t):
-    r'\"([^\\\n]|(\\.))*?\"'
-    t.value = t.value[1:-1]  # Remover las comillas
-    return t
 
 def t_TkNum(t):
     r'\d+'
@@ -110,30 +106,41 @@ def t_comment(t):
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+    t.lexer.lexpos = t.lexer.lexpos  # Esto ayuda a mantener las posiciones correctas
 
 # Manejo de errores
 def t_error(t):
-    # Inicializar lista de errores si no existe
     if not hasattr(t.lexer, 'errors'):
         t.lexer.errors = []
     
-    # Calcular columna
-    column = find_column(t.lexer.lexdata, t.lexpos)
+    # Caracteres que siempre son errores (incluyendo " y \)
+    if t.value[0] in ['"', '\\']:
+        column = find_column(t.lexer.lexdata, t.lexpos)
+        error_msg = f'Error: Unexpected character "{t.value[0]}" in row {t.lineno}, column {column}'
+        t.lexer.errors.append(error_msg)
+        t.lexer.skip(1)
+        return
     
-    # Guardar el mensaje de error
+    # Manejo especial para : y =
+    if t.value[0] == ':':
+        t.lexer.skip(1)
+        return
+    if t.value[0] == '=' and t.lexer.lexpos > 0 and t.lexer.lexdata[t.lexpos - 1] == ':':
+        t.lexer.skip(1)
+        return
+    
+    # Otros caracteres inesperados
+    column = find_column(t.lexer.lexdata, t.lexpos)
     error_msg = f'Error: Unexpected character "{t.value[0]}" in row {t.lineno}, column {column}'
     t.lexer.errors.append(error_msg)
-    
-    # Saltar el caracter problemático
     t.lexer.skip(1)
 
 # Función para calcular la columna
 def find_column(input_str, lexpos):
-    """Calcula la columna basada en la posición en el texto de entrada"""
     last_cr = input_str.rfind('\n', 0, lexpos)
     if last_cr < 0:
-        last_cr = 0
-    return (lexpos - last_cr) + 1
+        return lexpos + 1
+    return (lexpos - last_cr)
 
 # Construir el lexer
 lexer = lex.lex()
@@ -150,9 +157,10 @@ def main():
     
     try:
         with open(filename, 'r') as file:
-            data = file.read()
+            data = file.read().strip()
         
         lexer.input(data)
+        lexer.lineno = 1  # Reiniciar contador de líneas
         
         # Lista para almacenar errores
         errors = []
@@ -173,16 +181,28 @@ def main():
         
         # Si no hay errores, procesar tokens normalmente
         lexer.input(data)  # Reiniciamos el lexer
-        for token in lexer:
-            print(f"{token.type}", end=' ')
+        lexer.lineno = 1  # Reiniciamos contador nuevamente
+
+        
+        tokens = list(lexer)  # Convertir a lista para saber el último token
+        for i, token in enumerate(tokens):
             if token.type in ['TkId', 'TkNum', 'TkString']:
-                print(f"(\"{token.value}\")", end=' ')
-            print(f"{token.lineno} {find_column(data, token.lexpos)}")
-           
-                
+                if token.type == 'TkNum':
+                    line = f"{token.type}({token.value}) {token.lineno} {find_column(data, token.lexpos)}"
+                else:
+                    line = f"{token.type}(\"{token.value}\") {token.lineno} {find_column(data, token.lexpos)}"
+            else:
+                line = f"{token.type} {token.lineno} {find_column(data, token.lexpos)}"
+    
+                # Solo agregar salto de línea si no es el último token
+            if i < len(tokens) - 1:
+                print(line)
+            else:
+                print(line, end='')  # Último token sin salto de línea
+    
     except FileNotFoundError:
-        print(f"Error: No se pudo abrir el archivo {filename}")
-        sys.exit(1)
+            print(f"Error: No se pudo abrir el archivo {filename}")
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()

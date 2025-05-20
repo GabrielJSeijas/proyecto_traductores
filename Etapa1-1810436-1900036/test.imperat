@@ -1,7 +1,4 @@
 {
-    int a, b, c;
-    function[..2] d, e, f;
-    a := b + 3;@
-    print e
-// Esto es un comentario. Debe ser ignorado.
-}
+   // No se puede escapar caracteres que no sean \, n o "
+   print "Tratando de escapar una b \b"
+} 
