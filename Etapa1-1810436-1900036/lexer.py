@@ -5,7 +5,7 @@ import ply.lex as lex
 # Lista de nombres de tokens
 tokens = [
     # Palabras clave
-    'TkIf', 'TkWhile', 'TkEnd', 'TkInt', 'TkFunction', 'TkPrint', 'TkReturn','TkTrue', 'TkFalse',
+    'TkIf','TkFi', 'TkWhile', 'TkEnd', 'TkInt', 'TkFunction', 'TkPrint', 'TkReturn','TkTrue', 'TkFalse',
     
     # Identificadores y literales
     'TkId', 'TkNum', 'TkString',
@@ -29,7 +29,8 @@ reserved = {
     'true': 'TkTrue',
     'false': 'TkFalse',
     'or': 'TkOr',
-    'and': 'TkAnd'
+    'and': 'TkAnd',
+    'fi': 'TkFi',
 }
 
 # Expresiones regulares para tokens simples
