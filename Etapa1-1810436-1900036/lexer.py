@@ -1,6 +1,8 @@
+# Autores: Angel Valero 18-10436 y Gabriel Seijas 19-00036 
 import sys
 import ply.lex as lex
 
+# Definición de los tokens
 tokens = [
     'TkIf', 'TkFi', 'TkWhile', 'TkEnd', 'TkInt', 'TkFunction', 'TkPrint',
     'TkReturn', 'TkTrue', 'TkFalse', 'TkSkip', 'TkElse', 'TkBool',
@@ -11,6 +13,7 @@ tokens = [
     'TkNEqual', 'TkOBracket', 'TkCBracket', 'TkTwoPoints', 'TkApp'
 ]
 
+# Definición de palabras reservadas
 reserved = {
     'if': 'TkIf', 'while': 'TkWhile', 'end': 'TkEnd', 'int': 'TkInt',
     'function': 'TkFunction', 'print': 'TkPrint', 'return': 'TkReturn',
@@ -18,6 +21,7 @@ reserved = {
     'fi': 'TkFi', 'skip': 'TkSkip', 'else': 'TkElse', 'bool': 'TkBool'
 }
 
+# Definición de los tokens
 t_TkOBlock = r'\{'
 t_TkCBlock = r'\}'
 t_TkComma = r','
@@ -35,54 +39,65 @@ t_TkCBracket = r'\]'
 t_TkTwoPoints = r':'
 t_TkApp = r'\.'
 
+# Definición de operador lógico
 def t_TkSoForth(t):
     r'\.\.'
     return t
 
+# Definición de operador lógico
 def t_TkAsig(t):
     r':='
     return t
 
+# Definición de operador lógico
 def t_TkArrow(t):
     r'-->'
     return t
 
+# Definición de operador lógico
 def t_TkGuard(t):
     r'\[\]'
     return t
 
+# Definición de operador lógico
 def t_TkLeq(t):
     r'<='
     return t
 
+# Definición de operador mayor o igual
 def t_TkGeq(t):
     r'>='
     return t
 
+# Definición de operador lógico
 def t_TkEqual(t):
     r'=='
     return t
 
+# Definición de operador no igual
 def t_TkNEqual(t):
     r'<>'
     return t
 
+# Definición de los tokens de palabras reservadas
 def t_TkNum(t):
     r'\d+'
     t.value = int(t.value)
     return t
-
+# Definición de identificadores
 def t_TkId(t):
     r'[_a-zA-Z][_a-zA-Z0-9]*'
     t.type = reserved.get(t.value, 'TkId')
     return t
 
+# Definición de la cadena de caracteres
 def t_TkString(t):
     r'"([^"\\\n]|\\["\\n\\])*"'
     # Verificar si la cadena es válida
     raw = t.value[1:-1]
     result = ""
     i = 0
+    # Verificar si hay un salto de línea literal
     while i < len(raw):
         if raw[i] == '\\':
             i += 1
@@ -102,6 +117,7 @@ def t_TkString(t):
     t.value = result
     return t
 
+# Definición de la cadena de caracteres con error
 def t_error_string(t):
     r'"([^"\\\n]|\\.)*'
 
@@ -149,14 +165,17 @@ def t_error_string(t):
 
 t_ignore = ' \t'
 
+# Definición de los comentarios
 def t_comment(t):
     r'//.*'
     pass
 
+# Definición de los comentarios multilínea
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
 
+# Definición de los errores
 def t_error(t):
     if not hasattr(t.lexer, 'errors'): t.lexer.errors = []
     if t.value[0] == '"':
@@ -166,22 +185,25 @@ def t_error(t):
     t.lexer.errors.append((t.lineno, col, f'Unexpected character "{t.value[0]}"'))
     t.lexer.skip(1)
 
+# Función para encontrar la columna de un token
 def find_column(input_str, lexpos):
     last_cr = input_str.rfind('\n', 0, lexpos)
     return lexpos + 1 if last_cr < 0 else (lexpos - last_cr)
 
 lexer = lex.lex()
-
+# Función principal
 def main():
+    # Verificar si se pasó un argumento
     if len(sys.argv) != 2:
         print("Uso: python lexer.py archivo.imperat")
         sys.exit(1)
-
+    # Verificar si el archivo tiene la extensión correcta
     filename = sys.argv[1]
     if not filename.endswith('.imperat'):
         print("Error: El archivo debe tener extensión .imperat")
         sys.exit(1)
 
+    # Crear el lexer
     try:
         with open(filename, 'r') as file:
             data = file.read()
@@ -189,6 +211,7 @@ def main():
         lexer.input(data)
         lexer.lineno = 1
 
+    # Verificar si hay errores en el lexer
         if hasattr(lexer, 'errors'):
             del lexer.errors
 
@@ -198,9 +221,11 @@ def main():
             for l, c, msg in sorted(set(lexer.errors), key=lambda x: (x[0], x[1])):
                 print(f'Error: {msg} in row {l}, column {c}')
             sys.exit(1)
-
+    # Si no hay errores, imprimir los tokens
         lexer.input(data)
         lexer.lineno = 1
+
+        # Imprimir los tokens
         for token in lexer:
             col = find_column(data, token.lexpos)
             if token.type == 'TkNum':
@@ -210,9 +235,11 @@ def main():
             else:
                 print(f'{token.type} {token.lineno} {col}')
 
+# Si hay errores en el lexer, imprimirlos
     except FileNotFoundError:
         print(f"Error: No se pudo abrir el archivo {filename}")
         sys.exit(1)
 
-if __name__ == '__main__':
+# Si el archivo no tiene la extensión correcta, imprimir un mensaje de error
+if __name__ == '__main__': 
     main()
