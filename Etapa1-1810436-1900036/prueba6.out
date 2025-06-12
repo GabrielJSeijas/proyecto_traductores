@@ -1,0 +1,29 @@
+Block
+-Declare
+--_A : function[..Literal: 2]
+-Sequencing
+--Asig
+---Ident: _A
+---Comma
+----Comma
+-----Literal: 1
+-----Literal: 2
+----Literal: 4
+--Print
+---Plus
+----Plus
+-----Plus
+------Plus
+-------Plus
+--------String: "First: "
+--------App
+---------Ident: _A
+---------Literal: 0
+-------String: "\nSecond: "
+------App
+-------Ident: _A
+-------Literal: 1
+-----String: "\nThird: "
+----App
+-----Ident: A
+-----Literal: 2

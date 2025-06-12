@@ -11,15 +11,15 @@ Rule 1     program -> block
 Rule 2     block -> TkOBlock opt_stmt_list TkCBlock
 Rule 3     opt_stmt_list -> stmt_list
 Rule 4     opt_stmt_list -> empty
-Rule 5     stmt_list -> stmt_item
-Rule 6     stmt_list -> stmt_item stmt_list
-Rule 7     stmt_item -> declaration_stmt TkSemicolon
-Rule 8     stmt_item -> assignment_stmt TkSemicolon
-Rule 9     stmt_item -> print_stmt TkSemicolon
-Rule 10    stmt_item -> skip_stmt TkSemicolon
-Rule 11    stmt_item -> return_stmt TkSemicolon
-Rule 12    stmt_item -> if_stmt
-Rule 13    stmt_item -> while_stmt
+Rule 5     stmt_list -> statement
+Rule 6     stmt_list -> statement TkSemicolon stmt_list
+Rule 7     statement -> declaration_stmt
+Rule 8     statement -> assignment_stmt
+Rule 9     statement -> print_stmt
+Rule 10    statement -> skip_stmt
+Rule 11    statement -> return_stmt
+Rule 12    statement -> if_stmt
+Rule 13    statement -> while_stmt
 Rule 14    declaration_stmt -> TkInt declare_id_list
 Rule 15    declaration_stmt -> TkBool declare_id_list
 Rule 16    declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
@@ -109,7 +109,7 @@ TkOr                 : 46
 TkPlus               : 42
 TkPrint              : 20
 TkReturn             : 22
-TkSemicolon          : 7 8 9 10 11 34
+TkSemicolon          : 6 34
 TkSkip               : 21
 TkSoForth            : 16
 TkString             : 60
@@ -138,7 +138,7 @@ print_stmt           : 9 36
 program              : 0
 return_stmt          : 11 38
 skip_stmt            : 10 37
-stmt_item            : 5 6
+statement            : 5 6
 stmt_list            : 3 6
 while_stmt           : 13 40
 
@@ -173,16 +173,16 @@ state 3
     (2) block -> TkOBlock . opt_stmt_list TkCBlock
     (3) opt_stmt_list -> . stmt_list
     (4) opt_stmt_list -> . empty
-    (5) stmt_list -> . stmt_item
-    (6) stmt_list -> . stmt_item stmt_list
+    (5) stmt_list -> . statement
+    (6) stmt_list -> . statement TkSemicolon stmt_list
     (64) empty -> .
-    (7) stmt_item -> . declaration_stmt TkSemicolon
-    (8) stmt_item -> . assignment_stmt TkSemicolon
-    (9) stmt_item -> . print_stmt TkSemicolon
-    (10) stmt_item -> . skip_stmt TkSemicolon
-    (11) stmt_item -> . return_stmt TkSemicolon
-    (12) stmt_item -> . if_stmt
-    (13) stmt_item -> . while_stmt
+    (7) statement -> . declaration_stmt
+    (8) statement -> . assignment_stmt
+    (9) statement -> . print_stmt
+    (10) statement -> . skip_stmt
+    (11) statement -> . return_stmt
+    (12) statement -> . if_stmt
+    (13) statement -> . while_stmt
     (14) declaration_stmt -> . TkInt declare_id_list
     (15) declaration_stmt -> . TkBool declare_id_list
     (16) declaration_stmt -> . TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
@@ -207,7 +207,7 @@ state 3
     opt_stmt_list                  shift and go to state 4
     stmt_list                      shift and go to state 5
     empty                          shift and go to state 6
-    stmt_item                      shift and go to state 7
+    statement                      shift and go to state 7
     declaration_stmt               shift and go to state 8
     assignment_stmt                shift and go to state 9
     print_stmt                     shift and go to state 10
@@ -239,113 +239,67 @@ state 6
 
 state 7
 
-    (5) stmt_list -> stmt_item .
-    (6) stmt_list -> stmt_item . stmt_list
-    (5) stmt_list -> . stmt_item
-    (6) stmt_list -> . stmt_item stmt_list
-    (7) stmt_item -> . declaration_stmt TkSemicolon
-    (8) stmt_item -> . assignment_stmt TkSemicolon
-    (9) stmt_item -> . print_stmt TkSemicolon
-    (10) stmt_item -> . skip_stmt TkSemicolon
-    (11) stmt_item -> . return_stmt TkSemicolon
-    (12) stmt_item -> . if_stmt
-    (13) stmt_item -> . while_stmt
-    (14) declaration_stmt -> . TkInt declare_id_list
-    (15) declaration_stmt -> . TkBool declare_id_list
-    (16) declaration_stmt -> . TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
-    (19) assignment_stmt -> . TkId TkAsig expr
-    (20) print_stmt -> . TkPrint expr
-    (21) skip_stmt -> . TkSkip
-    (22) return_stmt -> . TkReturn expr
-    (28) if_stmt -> . TkIf if_guards_list TkFi
-    (23) while_stmt -> . TkWhile expr TkArrow body_sequencing TkEnd
+    (5) stmt_list -> statement .
+    (6) stmt_list -> statement . TkSemicolon stmt_list
 
-    TkCBlock        reduce using rule 5 (stmt_list -> stmt_item .)
-    TkInt           shift and go to state 15
-    TkBool          shift and go to state 16
-    TkFunction      shift and go to state 17
-    TkId            shift and go to state 18
-    TkPrint         shift and go to state 19
-    TkSkip          shift and go to state 20
-    TkReturn        shift and go to state 21
-    TkIf            shift and go to state 22
-    TkWhile         shift and go to state 23
+    TkCBlock        reduce using rule 5 (stmt_list -> statement .)
+    TkSemicolon     shift and go to state 25
 
-    stmt_item                      shift and go to state 7
-    stmt_list                      shift and go to state 25
-    declaration_stmt               shift and go to state 8
-    assignment_stmt                shift and go to state 9
-    print_stmt                     shift and go to state 10
-    skip_stmt                      shift and go to state 11
-    return_stmt                    shift and go to state 12
-    if_stmt                        shift and go to state 13
-    while_stmt                     shift and go to state 14
 
 state 8
 
-    (7) stmt_item -> declaration_stmt . TkSemicolon
+    (7) statement -> declaration_stmt .
 
-    TkSemicolon     shift and go to state 26
+    TkSemicolon     reduce using rule 7 (statement -> declaration_stmt .)
+    TkCBlock        reduce using rule 7 (statement -> declaration_stmt .)
 
 
 state 9
 
-    (8) stmt_item -> assignment_stmt . TkSemicolon
+    (8) statement -> assignment_stmt .
 
-    TkSemicolon     shift and go to state 27
+    TkSemicolon     reduce using rule 8 (statement -> assignment_stmt .)
+    TkCBlock        reduce using rule 8 (statement -> assignment_stmt .)
 
 
 state 10
 
-    (9) stmt_item -> print_stmt . TkSemicolon
+    (9) statement -> print_stmt .
 
-    TkSemicolon     shift and go to state 28
+    TkSemicolon     reduce using rule 9 (statement -> print_stmt .)
+    TkCBlock        reduce using rule 9 (statement -> print_stmt .)
 
 
 state 11
 
-    (10) stmt_item -> skip_stmt . TkSemicolon
+    (10) statement -> skip_stmt .
 
-    TkSemicolon     shift and go to state 29
+    TkSemicolon     reduce using rule 10 (statement -> skip_stmt .)
+    TkCBlock        reduce using rule 10 (statement -> skip_stmt .)
 
 
 state 12
 
-    (11) stmt_item -> return_stmt . TkSemicolon
+    (11) statement -> return_stmt .
 
-    TkSemicolon     shift and go to state 30
+    TkSemicolon     reduce using rule 11 (statement -> return_stmt .)
+    TkCBlock        reduce using rule 11 (statement -> return_stmt .)
 
 
 state 13
 
-    (12) stmt_item -> if_stmt .
+    (12) statement -> if_stmt .
 
-    TkInt           reduce using rule 12 (stmt_item -> if_stmt .)
-    TkBool          reduce using rule 12 (stmt_item -> if_stmt .)
-    TkFunction      reduce using rule 12 (stmt_item -> if_stmt .)
-    TkId            reduce using rule 12 (stmt_item -> if_stmt .)
-    TkPrint         reduce using rule 12 (stmt_item -> if_stmt .)
-    TkSkip          reduce using rule 12 (stmt_item -> if_stmt .)
-    TkReturn        reduce using rule 12 (stmt_item -> if_stmt .)
-    TkIf            reduce using rule 12 (stmt_item -> if_stmt .)
-    TkWhile         reduce using rule 12 (stmt_item -> if_stmt .)
-    TkCBlock        reduce using rule 12 (stmt_item -> if_stmt .)
+    TkSemicolon     reduce using rule 12 (statement -> if_stmt .)
+    TkCBlock        reduce using rule 12 (statement -> if_stmt .)
 
 
 state 14
 
-    (13) stmt_item -> while_stmt .
+    (13) statement -> while_stmt .
 
-    TkInt           reduce using rule 13 (stmt_item -> while_stmt .)
-    TkBool          reduce using rule 13 (stmt_item -> while_stmt .)
-    TkFunction      reduce using rule 13 (stmt_item -> while_stmt .)
-    TkId            reduce using rule 13 (stmt_item -> while_stmt .)
-    TkPrint         reduce using rule 13 (stmt_item -> while_stmt .)
-    TkSkip          reduce using rule 13 (stmt_item -> while_stmt .)
-    TkReturn        reduce using rule 13 (stmt_item -> while_stmt .)
-    TkIf            reduce using rule 13 (stmt_item -> while_stmt .)
-    TkWhile         reduce using rule 13 (stmt_item -> while_stmt .)
-    TkCBlock        reduce using rule 13 (stmt_item -> while_stmt .)
+    TkSemicolon     reduce using rule 13 (statement -> while_stmt .)
+    TkCBlock        reduce using rule 13 (statement -> while_stmt .)
 
 
 state 15
@@ -354,9 +308,9 @@ state 15
     (17) declare_id_list -> . TkId
     (18) declare_id_list -> . TkId TkComma declare_id_list
 
-    TkId            shift and go to state 32
+    TkId            shift and go to state 27
 
-    declare_id_list                shift and go to state 31
+    declare_id_list                shift and go to state 26
 
 state 16
 
@@ -364,22 +318,22 @@ state 16
     (17) declare_id_list -> . TkId
     (18) declare_id_list -> . TkId TkComma declare_id_list
 
-    TkId            shift and go to state 32
+    TkId            shift and go to state 27
 
-    declare_id_list                shift and go to state 33
+    declare_id_list                shift and go to state 28
 
 state 17
 
     (16) declaration_stmt -> TkFunction . TkOBracket TkSoForth TkNum TkCBracket declare_id_list
 
-    TkOBracket      shift and go to state 34
+    TkOBracket      shift and go to state 29
 
 
 state 18
 
     (19) assignment_stmt -> TkId . TkAsig expr
 
-    TkAsig          shift and go to state 35
+    TkAsig          shift and go to state 30
 
 
 state 19
@@ -408,22 +362,23 @@ state 19
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 36
+    expr                           shift and go to state 31
 
 state 20
 
     (21) skip_stmt -> TkSkip .
 
     TkSemicolon     reduce using rule 21 (skip_stmt -> TkSkip .)
+    TkCBlock        reduce using rule 21 (skip_stmt -> TkSkip .)
     TkGuard         reduce using rule 21 (skip_stmt -> TkSkip .)
     TkMinus         reduce using rule 21 (skip_stmt -> TkSkip .)
     TkNot           reduce using rule 21 (skip_stmt -> TkSkip .)
@@ -463,16 +418,16 @@ state 21
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 45
+    expr                           shift and go to state 40
 
 state 22
 
@@ -504,19 +459,19 @@ state 22
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkGuard         shift and go to state 49
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkGuard         shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    if_guards_list                 shift and go to state 46
-    if_guard_clause                shift and go to state 47
-    expr                           shift and go to state 48
+    if_guards_list                 shift and go to state 41
+    if_guard_clause                shift and go to state 42
+    expr                           shift and go to state 43
 
 state 23
 
@@ -544,16 +499,16 @@ state 23
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 50
+    expr                           shift and go to state 45
 
 state 24
 
@@ -576,122 +531,80 @@ state 24
 
 state 25
 
-    (6) stmt_list -> stmt_item stmt_list .
+    (6) stmt_list -> statement TkSemicolon . stmt_list
+    (5) stmt_list -> . statement
+    (6) stmt_list -> . statement TkSemicolon stmt_list
+    (7) statement -> . declaration_stmt
+    (8) statement -> . assignment_stmt
+    (9) statement -> . print_stmt
+    (10) statement -> . skip_stmt
+    (11) statement -> . return_stmt
+    (12) statement -> . if_stmt
+    (13) statement -> . while_stmt
+    (14) declaration_stmt -> . TkInt declare_id_list
+    (15) declaration_stmt -> . TkBool declare_id_list
+    (16) declaration_stmt -> . TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
+    (19) assignment_stmt -> . TkId TkAsig expr
+    (20) print_stmt -> . TkPrint expr
+    (21) skip_stmt -> . TkSkip
+    (22) return_stmt -> . TkReturn expr
+    (28) if_stmt -> . TkIf if_guards_list TkFi
+    (23) while_stmt -> . TkWhile expr TkArrow body_sequencing TkEnd
 
-    TkCBlock        reduce using rule 6 (stmt_list -> stmt_item stmt_list .)
+    TkInt           shift and go to state 15
+    TkBool          shift and go to state 16
+    TkFunction      shift and go to state 17
+    TkId            shift and go to state 18
+    TkPrint         shift and go to state 19
+    TkSkip          shift and go to state 20
+    TkReturn        shift and go to state 21
+    TkIf            shift and go to state 22
+    TkWhile         shift and go to state 23
 
+    statement                      shift and go to state 7
+    stmt_list                      shift and go to state 46
+    declaration_stmt               shift and go to state 8
+    assignment_stmt                shift and go to state 9
+    print_stmt                     shift and go to state 10
+    skip_stmt                      shift and go to state 11
+    return_stmt                    shift and go to state 12
+    if_stmt                        shift and go to state 13
+    while_stmt                     shift and go to state 14
 
 state 26
-
-    (7) stmt_item -> declaration_stmt TkSemicolon .
-
-    TkInt           reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkBool          reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkFunction      reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkId            reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkPrint         reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkSkip          reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkReturn        reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkIf            reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkWhile         reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-    TkCBlock        reduce using rule 7 (stmt_item -> declaration_stmt TkSemicolon .)
-
-
-state 27
-
-    (8) stmt_item -> assignment_stmt TkSemicolon .
-
-    TkInt           reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkBool          reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkFunction      reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkId            reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkPrint         reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkSkip          reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkReturn        reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkIf            reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkWhile         reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-    TkCBlock        reduce using rule 8 (stmt_item -> assignment_stmt TkSemicolon .)
-
-
-state 28
-
-    (9) stmt_item -> print_stmt TkSemicolon .
-
-    TkInt           reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkBool          reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkFunction      reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkId            reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkPrint         reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkSkip          reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkReturn        reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkIf            reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkWhile         reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-    TkCBlock        reduce using rule 9 (stmt_item -> print_stmt TkSemicolon .)
-
-
-state 29
-
-    (10) stmt_item -> skip_stmt TkSemicolon .
-
-    TkInt           reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkBool          reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkFunction      reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkId            reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkPrint         reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkSkip          reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkReturn        reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkIf            reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkWhile         reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-    TkCBlock        reduce using rule 10 (stmt_item -> skip_stmt TkSemicolon .)
-
-
-state 30
-
-    (11) stmt_item -> return_stmt TkSemicolon .
-
-    TkInt           reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkBool          reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkFunction      reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkId            reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkPrint         reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkSkip          reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkReturn        reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkIf            reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkWhile         reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-    TkCBlock        reduce using rule 11 (stmt_item -> return_stmt TkSemicolon .)
-
-
-state 31
 
     (14) declaration_stmt -> TkInt declare_id_list .
 
     TkSemicolon     reduce using rule 14 (declaration_stmt -> TkInt declare_id_list .)
+    TkCBlock        reduce using rule 14 (declaration_stmt -> TkInt declare_id_list .)
 
 
-state 32
+state 27
 
     (17) declare_id_list -> TkId .
     (18) declare_id_list -> TkId . TkComma declare_id_list
 
     TkSemicolon     reduce using rule 17 (declare_id_list -> TkId .)
-    TkComma         shift and go to state 51
+    TkCBlock        reduce using rule 17 (declare_id_list -> TkId .)
+    TkComma         shift and go to state 47
 
 
-state 33
+state 28
 
     (15) declaration_stmt -> TkBool declare_id_list .
 
     TkSemicolon     reduce using rule 15 (declaration_stmt -> TkBool declare_id_list .)
+    TkCBlock        reduce using rule 15 (declaration_stmt -> TkBool declare_id_list .)
 
 
-state 34
+state 29
 
     (16) declaration_stmt -> TkFunction TkOBracket . TkSoForth TkNum TkCBracket declare_id_list
 
-    TkSoForth       shift and go to state 52
+    TkSoForth       shift and go to state 48
 
 
-state 35
+state 30
 
     (19) assignment_stmt -> TkId TkAsig . expr
     (42) expr -> . expr TkPlus expr
@@ -717,18 +630,18 @@ state 35
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 53
+    expr                           shift and go to state 49
 
-state 36
+state 31
 
     (20) print_stmt -> TkPrint expr .
     (42) expr -> expr . TkPlus expr
@@ -748,6 +661,7 @@ state 36
 
   ! shift/reduce conflict for TkMinus resolved as shift
     TkSemicolon     reduce using rule 20 (print_stmt -> TkPrint expr .)
+    TkCBlock        reduce using rule 20 (print_stmt -> TkPrint expr .)
     TkGuard         reduce using rule 20 (print_stmt -> TkPrint expr .)
     TkNot           reduce using rule 20 (print_stmt -> TkPrint expr .)
     TkOpenPar       reduce using rule 20 (print_stmt -> TkPrint expr .)
@@ -758,25 +672,25 @@ state 36
     TkId            reduce using rule 20 (print_stmt -> TkPrint expr .)
     TkFi            reduce using rule 20 (print_stmt -> TkPrint expr .)
     TkEnd           reduce using rule 20 (print_stmt -> TkPrint expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
   ! TkMinus         [ reduce using rule 20 (print_stmt -> TkPrint expr .) ]
 
 
-state 37
+state 32
 
     (54) expr -> TkMinus . expr
     (42) expr -> . expr TkPlus expr
@@ -802,18 +716,18 @@ state 37
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 68
+    expr                           shift and go to state 64
 
-state 38
+state 33
 
     (55) expr -> TkNot . expr
     (42) expr -> . expr TkPlus expr
@@ -839,18 +753,18 @@ state 38
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 69
+    expr                           shift and go to state 65
 
-state 39
+state 34
 
     (56) expr -> TkOpenPar . expr TkClosePar
     (42) expr -> . expr TkPlus expr
@@ -876,18 +790,18 @@ state 39
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 70
+    expr                           shift and go to state 66
 
-state 40
+state 35
 
     (57) expr -> TkNum .
 
@@ -906,6 +820,7 @@ state 40
     TkComma         reduce using rule 57 (expr -> TkNum .)
     TkTwoPoints     reduce using rule 57 (expr -> TkNum .)
     TkSemicolon     reduce using rule 57 (expr -> TkNum .)
+    TkCBlock        reduce using rule 57 (expr -> TkNum .)
     TkGuard         reduce using rule 57 (expr -> TkNum .)
     TkNot           reduce using rule 57 (expr -> TkNum .)
     TkOpenPar       reduce using rule 57 (expr -> TkNum .)
@@ -920,7 +835,7 @@ state 40
     TkClosePar      reduce using rule 57 (expr -> TkNum .)
 
 
-state 41
+state 36
 
     (58) expr -> TkTrue .
 
@@ -939,6 +854,7 @@ state 41
     TkComma         reduce using rule 58 (expr -> TkTrue .)
     TkTwoPoints     reduce using rule 58 (expr -> TkTrue .)
     TkSemicolon     reduce using rule 58 (expr -> TkTrue .)
+    TkCBlock        reduce using rule 58 (expr -> TkTrue .)
     TkGuard         reduce using rule 58 (expr -> TkTrue .)
     TkNot           reduce using rule 58 (expr -> TkTrue .)
     TkOpenPar       reduce using rule 58 (expr -> TkTrue .)
@@ -953,7 +869,7 @@ state 41
     TkClosePar      reduce using rule 58 (expr -> TkTrue .)
 
 
-state 42
+state 37
 
     (59) expr -> TkFalse .
 
@@ -972,6 +888,7 @@ state 42
     TkComma         reduce using rule 59 (expr -> TkFalse .)
     TkTwoPoints     reduce using rule 59 (expr -> TkFalse .)
     TkSemicolon     reduce using rule 59 (expr -> TkFalse .)
+    TkCBlock        reduce using rule 59 (expr -> TkFalse .)
     TkGuard         reduce using rule 59 (expr -> TkFalse .)
     TkNot           reduce using rule 59 (expr -> TkFalse .)
     TkOpenPar       reduce using rule 59 (expr -> TkFalse .)
@@ -986,7 +903,7 @@ state 42
     TkClosePar      reduce using rule 59 (expr -> TkFalse .)
 
 
-state 43
+state 38
 
     (60) expr -> TkString .
 
@@ -1005,6 +922,7 @@ state 43
     TkComma         reduce using rule 60 (expr -> TkString .)
     TkTwoPoints     reduce using rule 60 (expr -> TkString .)
     TkSemicolon     reduce using rule 60 (expr -> TkString .)
+    TkCBlock        reduce using rule 60 (expr -> TkString .)
     TkGuard         reduce using rule 60 (expr -> TkString .)
     TkNot           reduce using rule 60 (expr -> TkString .)
     TkOpenPar       reduce using rule 60 (expr -> TkString .)
@@ -1019,7 +937,7 @@ state 43
     TkClosePar      reduce using rule 60 (expr -> TkString .)
 
 
-state 44
+state 39
 
     (61) expr -> TkId .
 
@@ -1038,6 +956,7 @@ state 44
     TkComma         reduce using rule 61 (expr -> TkId .)
     TkTwoPoints     reduce using rule 61 (expr -> TkId .)
     TkSemicolon     reduce using rule 61 (expr -> TkId .)
+    TkCBlock        reduce using rule 61 (expr -> TkId .)
     TkGuard         reduce using rule 61 (expr -> TkId .)
     TkNot           reduce using rule 61 (expr -> TkId .)
     TkOpenPar       reduce using rule 61 (expr -> TkId .)
@@ -1052,7 +971,7 @@ state 44
     TkClosePar      reduce using rule 61 (expr -> TkId .)
 
 
-state 45
+state 40
 
     (22) return_stmt -> TkReturn expr .
     (42) expr -> expr . TkPlus expr
@@ -1072,6 +991,7 @@ state 45
 
   ! shift/reduce conflict for TkMinus resolved as shift
     TkSemicolon     reduce using rule 22 (return_stmt -> TkReturn expr .)
+    TkCBlock        reduce using rule 22 (return_stmt -> TkReturn expr .)
     TkGuard         reduce using rule 22 (return_stmt -> TkReturn expr .)
     TkNot           reduce using rule 22 (return_stmt -> TkReturn expr .)
     TkOpenPar       reduce using rule 22 (return_stmt -> TkReturn expr .)
@@ -1082,32 +1002,32 @@ state 45
     TkId            reduce using rule 22 (return_stmt -> TkReturn expr .)
     TkFi            reduce using rule 22 (return_stmt -> TkReturn expr .)
     TkEnd           reduce using rule 22 (return_stmt -> TkReturn expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
   ! TkMinus         [ reduce using rule 22 (return_stmt -> TkReturn expr .) ]
 
 
-state 46
+state 41
 
     (28) if_stmt -> TkIf if_guards_list . TkFi
 
-    TkFi            shift and go to state 71
+    TkFi            shift and go to state 67
 
 
-state 47
+state 42
 
     (29) if_guards_list -> if_guard_clause .
     (30) if_guards_list -> if_guard_clause . if_guards_list
@@ -1139,21 +1059,21 @@ state 47
     (63) expr -> . expr TkTwoPoints expr
 
     TkFi            reduce using rule 29 (if_guards_list -> if_guard_clause .)
-    TkGuard         shift and go to state 49
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkGuard         shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    if_guard_clause                shift and go to state 47
-    if_guards_list                 shift and go to state 72
-    expr                           shift and go to state 48
+    if_guard_clause                shift and go to state 42
+    if_guards_list                 shift and go to state 68
+    expr                           shift and go to state 43
 
-state 48
+state 43
 
     (31) if_guard_clause -> expr . TkArrow body_sequencing
     (42) expr -> expr . TkPlus expr
@@ -1171,24 +1091,24 @@ state 48
     (62) expr -> expr . TkComma expr
     (63) expr -> expr . TkTwoPoints expr
 
-    TkArrow         shift and go to state 73
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkArrow         shift and go to state 69
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
 
-state 49
+state 44
 
     (32) if_guard_clause -> TkGuard . expr TkArrow body_sequencing
     (42) expr -> . expr TkPlus expr
@@ -1214,18 +1134,18 @@ state 49
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 74
+    expr                           shift and go to state 70
 
-state 50
+state 45
 
     (23) while_stmt -> TkWhile expr . TkArrow body_sequencing TkEnd
     (42) expr -> expr . TkPlus expr
@@ -1243,41 +1163,48 @@ state 50
     (62) expr -> expr . TkComma expr
     (63) expr -> expr . TkTwoPoints expr
 
-    TkArrow         shift and go to state 75
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkArrow         shift and go to state 71
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
 
-state 51
+state 46
+
+    (6) stmt_list -> statement TkSemicolon stmt_list .
+
+    TkCBlock        reduce using rule 6 (stmt_list -> statement TkSemicolon stmt_list .)
+
+
+state 47
 
     (18) declare_id_list -> TkId TkComma . declare_id_list
     (17) declare_id_list -> . TkId
     (18) declare_id_list -> . TkId TkComma declare_id_list
 
-    TkId            shift and go to state 32
+    TkId            shift and go to state 27
 
-    declare_id_list                shift and go to state 76
+    declare_id_list                shift and go to state 72
 
-state 52
+state 48
 
     (16) declaration_stmt -> TkFunction TkOBracket TkSoForth . TkNum TkCBracket declare_id_list
 
-    TkNum           shift and go to state 77
+    TkNum           shift and go to state 73
 
 
-state 53
+state 49
 
     (19) assignment_stmt -> TkId TkAsig expr .
     (42) expr -> expr . TkPlus expr
@@ -1297,6 +1224,7 @@ state 53
 
   ! shift/reduce conflict for TkMinus resolved as shift
     TkSemicolon     reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
+    TkCBlock        reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
     TkGuard         reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
     TkNot           reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
     TkOpenPar       reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
@@ -1307,25 +1235,25 @@ state 53
     TkId            reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
     TkFi            reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
     TkEnd           reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
   ! TkMinus         [ reduce using rule 19 (assignment_stmt -> TkId TkAsig expr .) ]
 
 
-state 54
+state 50
 
     (42) expr -> expr TkPlus . expr
     (42) expr -> . expr TkPlus expr
@@ -1351,18 +1279,18 @@ state 54
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 78
+    expr                           shift and go to state 74
 
-state 55
+state 51
 
     (43) expr -> expr TkMinus . expr
     (42) expr -> . expr TkPlus expr
@@ -1388,18 +1316,18 @@ state 55
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 79
+    expr                           shift and go to state 75
 
-state 56
+state 52
 
     (44) expr -> expr TkMult . expr
     (42) expr -> . expr TkPlus expr
@@ -1425,18 +1353,18 @@ state 56
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 80
+    expr                           shift and go to state 76
 
-state 57
+state 53
 
     (45) expr -> expr TkAnd . expr
     (42) expr -> . expr TkPlus expr
@@ -1462,18 +1390,18 @@ state 57
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 81
+    expr                           shift and go to state 77
 
-state 58
+state 54
 
     (46) expr -> expr TkOr . expr
     (42) expr -> . expr TkPlus expr
@@ -1499,18 +1427,18 @@ state 58
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 82
+    expr                           shift and go to state 78
 
-state 59
+state 55
 
     (47) expr -> expr TkEqual . expr
     (42) expr -> . expr TkPlus expr
@@ -1536,18 +1464,18 @@ state 59
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 83
+    expr                           shift and go to state 79
 
-state 60
+state 56
 
     (48) expr -> expr TkNEqual . expr
     (42) expr -> . expr TkPlus expr
@@ -1573,18 +1501,18 @@ state 60
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 84
+    expr                           shift and go to state 80
 
-state 61
+state 57
 
     (49) expr -> expr TkLess . expr
     (42) expr -> . expr TkPlus expr
@@ -1610,18 +1538,18 @@ state 61
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 85
+    expr                           shift and go to state 81
 
-state 62
+state 58
 
     (50) expr -> expr TkGreater . expr
     (42) expr -> . expr TkPlus expr
@@ -1647,18 +1575,18 @@ state 62
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 86
+    expr                           shift and go to state 82
 
-state 63
+state 59
 
     (51) expr -> expr TkLeq . expr
     (42) expr -> . expr TkPlus expr
@@ -1684,18 +1612,18 @@ state 63
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 87
+    expr                           shift and go to state 83
 
-state 64
+state 60
 
     (52) expr -> expr TkGeq . expr
     (42) expr -> . expr TkPlus expr
@@ -1721,18 +1649,18 @@ state 64
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 88
+    expr                           shift and go to state 84
 
-state 65
+state 61
 
     (53) expr -> expr TkApp . expr
     (42) expr -> . expr TkPlus expr
@@ -1758,18 +1686,18 @@ state 65
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 89
+    expr                           shift and go to state 85
 
-state 66
+state 62
 
     (62) expr -> expr TkComma . expr
     (42) expr -> . expr TkPlus expr
@@ -1795,18 +1723,18 @@ state 66
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 90
+    expr                           shift and go to state 86
 
-state 67
+state 63
 
     (63) expr -> expr TkTwoPoints . expr
     (42) expr -> . expr TkPlus expr
@@ -1832,18 +1760,18 @@ state 67
     (62) expr -> . expr TkComma expr
     (63) expr -> . expr TkTwoPoints expr
 
-    TkMinus         shift and go to state 37
-    TkNot           shift and go to state 38
-    TkOpenPar       shift and go to state 39
-    TkNum           shift and go to state 40
-    TkTrue          shift and go to state 41
-    TkFalse         shift and go to state 42
-    TkString        shift and go to state 43
-    TkId            shift and go to state 44
+    TkMinus         shift and go to state 32
+    TkNot           shift and go to state 33
+    TkOpenPar       shift and go to state 34
+    TkNum           shift and go to state 35
+    TkTrue          shift and go to state 36
+    TkFalse         shift and go to state 37
+    TkString        shift and go to state 38
+    TkId            shift and go to state 39
 
-    expr                           shift and go to state 91
+    expr                           shift and go to state 87
 
-state 68
+state 64
 
     (54) expr -> TkMinus expr .
     (42) expr -> expr . TkPlus expr
@@ -1875,6 +1803,7 @@ state 68
     TkComma         reduce using rule 54 (expr -> TkMinus expr .)
     TkTwoPoints     reduce using rule 54 (expr -> TkMinus expr .)
     TkSemicolon     reduce using rule 54 (expr -> TkMinus expr .)
+    TkCBlock        reduce using rule 54 (expr -> TkMinus expr .)
     TkGuard         reduce using rule 54 (expr -> TkMinus expr .)
     TkNot           reduce using rule 54 (expr -> TkMinus expr .)
     TkOpenPar       reduce using rule 54 (expr -> TkMinus expr .)
@@ -1887,25 +1816,25 @@ state 68
     TkEnd           reduce using rule 54 (expr -> TkMinus expr .)
     TkArrow         reduce using rule 54 (expr -> TkMinus expr .)
     TkClosePar      reduce using rule 54 (expr -> TkMinus expr .)
-    TkApp           shift and go to state 65
+    TkApp           shift and go to state 61
 
   ! TkApp           [ reduce using rule 54 (expr -> TkMinus expr .) ]
-  ! TkPlus          [ shift and go to state 54 ]
-  ! TkMinus         [ shift and go to state 55 ]
-  ! TkMult          [ shift and go to state 56 ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkPlus          [ shift and go to state 50 ]
+  ! TkMinus         [ shift and go to state 51 ]
+  ! TkMult          [ shift and go to state 52 ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 69
+state 65
 
     (55) expr -> TkNot expr .
     (42) expr -> expr . TkPlus expr
@@ -1925,9 +1854,9 @@ state 69
 
     TkAnd           reduce using rule 55 (expr -> TkNot expr .)
     TkOr            reduce using rule 55 (expr -> TkNot expr .)
-    TkComma         reduce using rule 55 (expr -> TkNot expr .)
     TkTwoPoints     reduce using rule 55 (expr -> TkNot expr .)
     TkSemicolon     reduce using rule 55 (expr -> TkNot expr .)
+    TkCBlock        reduce using rule 55 (expr -> TkNot expr .)
     TkGuard         reduce using rule 55 (expr -> TkNot expr .)
     TkNot           reduce using rule 55 (expr -> TkNot expr .)
     TkOpenPar       reduce using rule 55 (expr -> TkNot expr .)
@@ -1940,16 +1869,17 @@ state 69
     TkEnd           reduce using rule 55 (expr -> TkNot expr .)
     TkArrow         reduce using rule 55 (expr -> TkNot expr .)
     TkClosePar      reduce using rule 55 (expr -> TkNot expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 55 (expr -> TkNot expr .) ]
   ! TkMinus         [ reduce using rule 55 (expr -> TkNot expr .) ]
@@ -1961,13 +1891,13 @@ state 69
   ! TkLeq           [ reduce using rule 55 (expr -> TkNot expr .) ]
   ! TkGeq           [ reduce using rule 55 (expr -> TkNot expr .) ]
   ! TkApp           [ reduce using rule 55 (expr -> TkNot expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 55 (expr -> TkNot expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 70
+state 66
 
     (56) expr -> TkOpenPar expr . TkClosePar
     (42) expr -> expr . TkPlus expr
@@ -1985,38 +1915,29 @@ state 70
     (62) expr -> expr . TkComma expr
     (63) expr -> expr . TkTwoPoints expr
 
-    TkClosePar      shift and go to state 92
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkClosePar      shift and go to state 88
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
 
-state 71
+state 67
 
     (28) if_stmt -> TkIf if_guards_list TkFi .
 
-    TkInt           reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkBool          reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkFunction      reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkId            reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkPrint         reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkSkip          reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkReturn        reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkIf            reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkWhile         reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
-    TkCBlock        reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkSemicolon     reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
+    TkCBlock        reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkGuard         reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkMinus         reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkNot           reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
@@ -2025,18 +1946,19 @@ state 71
     TkTrue          reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkFalse         reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkString        reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
+    TkId            reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkFi            reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
     TkEnd           reduce using rule 28 (if_stmt -> TkIf if_guards_list TkFi .)
 
 
-state 72
+state 68
 
     (30) if_guards_list -> if_guard_clause if_guards_list .
 
     TkFi            reduce using rule 30 (if_guards_list -> if_guard_clause if_guards_list .)
 
 
-state 73
+state 69
 
     (31) if_guard_clause -> expr TkArrow . body_sequencing
     (33) body_sequencing -> . body_stmt_item
@@ -2064,17 +1986,17 @@ state 73
     TkWhile         shift and go to state 23
     TkOBlock        shift and go to state 3
 
-    body_sequencing                shift and go to state 93
-    body_stmt_item                 shift and go to state 94
-    assignment_stmt                shift and go to state 95
-    print_stmt                     shift and go to state 96
-    skip_stmt                      shift and go to state 97
-    return_stmt                    shift and go to state 98
-    if_stmt                        shift and go to state 99
-    while_stmt                     shift and go to state 100
-    block                          shift and go to state 101
+    body_sequencing                shift and go to state 89
+    body_stmt_item                 shift and go to state 90
+    assignment_stmt                shift and go to state 91
+    print_stmt                     shift and go to state 92
+    skip_stmt                      shift and go to state 93
+    return_stmt                    shift and go to state 94
+    if_stmt                        shift and go to state 95
+    while_stmt                     shift and go to state 96
+    block                          shift and go to state 97
 
-state 74
+state 70
 
     (32) if_guard_clause -> TkGuard expr . TkArrow body_sequencing
     (42) expr -> expr . TkPlus expr
@@ -2092,24 +2014,24 @@ state 74
     (62) expr -> expr . TkComma expr
     (63) expr -> expr . TkTwoPoints expr
 
-    TkArrow         shift and go to state 102
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkArrow         shift and go to state 98
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
 
-state 75
+state 71
 
     (23) while_stmt -> TkWhile expr TkArrow . body_sequencing TkEnd
     (33) body_sequencing -> . body_stmt_item
@@ -2137,31 +2059,32 @@ state 75
     TkWhile         shift and go to state 23
     TkOBlock        shift and go to state 3
 
-    body_sequencing                shift and go to state 103
-    body_stmt_item                 shift and go to state 94
-    assignment_stmt                shift and go to state 95
-    print_stmt                     shift and go to state 96
-    skip_stmt                      shift and go to state 97
-    return_stmt                    shift and go to state 98
-    if_stmt                        shift and go to state 99
-    while_stmt                     shift and go to state 100
-    block                          shift and go to state 101
+    body_sequencing                shift and go to state 99
+    body_stmt_item                 shift and go to state 90
+    assignment_stmt                shift and go to state 91
+    print_stmt                     shift and go to state 92
+    skip_stmt                      shift and go to state 93
+    return_stmt                    shift and go to state 94
+    if_stmt                        shift and go to state 95
+    while_stmt                     shift and go to state 96
+    block                          shift and go to state 97
 
-state 76
+state 72
 
     (18) declare_id_list -> TkId TkComma declare_id_list .
 
     TkSemicolon     reduce using rule 18 (declare_id_list -> TkId TkComma declare_id_list .)
+    TkCBlock        reduce using rule 18 (declare_id_list -> TkId TkComma declare_id_list .)
 
 
-state 77
+state 73
 
     (16) declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum . TkCBracket declare_id_list
 
-    TkCBracket      shift and go to state 104
+    TkCBracket      shift and go to state 100
 
 
-state 78
+state 74
 
     (42) expr -> expr TkPlus expr .
     (42) expr -> expr . TkPlus expr
@@ -2192,6 +2115,7 @@ state 78
     TkComma         reduce using rule 42 (expr -> expr TkPlus expr .)
     TkTwoPoints     reduce using rule 42 (expr -> expr TkPlus expr .)
     TkSemicolon     reduce using rule 42 (expr -> expr TkPlus expr .)
+    TkCBlock        reduce using rule 42 (expr -> expr TkPlus expr .)
     TkGuard         reduce using rule 42 (expr -> expr TkPlus expr .)
     TkNot           reduce using rule 42 (expr -> expr TkPlus expr .)
     TkOpenPar       reduce using rule 42 (expr -> expr TkPlus expr .)
@@ -2204,26 +2128,26 @@ state 78
     TkEnd           reduce using rule 42 (expr -> expr TkPlus expr .)
     TkArrow         reduce using rule 42 (expr -> expr TkPlus expr .)
     TkClosePar      reduce using rule 42 (expr -> expr TkPlus expr .)
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
 
   ! TkMult          [ reduce using rule 42 (expr -> expr TkPlus expr .) ]
   ! TkApp           [ reduce using rule 42 (expr -> expr TkPlus expr .) ]
-  ! TkPlus          [ shift and go to state 54 ]
-  ! TkMinus         [ shift and go to state 55 ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkPlus          [ shift and go to state 50 ]
+  ! TkMinus         [ shift and go to state 51 ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 79
+state 75
 
     (43) expr -> expr TkMinus expr .
     (42) expr -> expr . TkPlus expr
@@ -2254,6 +2178,7 @@ state 79
     TkComma         reduce using rule 43 (expr -> expr TkMinus expr .)
     TkTwoPoints     reduce using rule 43 (expr -> expr TkMinus expr .)
     TkSemicolon     reduce using rule 43 (expr -> expr TkMinus expr .)
+    TkCBlock        reduce using rule 43 (expr -> expr TkMinus expr .)
     TkGuard         reduce using rule 43 (expr -> expr TkMinus expr .)
     TkNot           reduce using rule 43 (expr -> expr TkMinus expr .)
     TkOpenPar       reduce using rule 43 (expr -> expr TkMinus expr .)
@@ -2266,26 +2191,26 @@ state 79
     TkEnd           reduce using rule 43 (expr -> expr TkMinus expr .)
     TkArrow         reduce using rule 43 (expr -> expr TkMinus expr .)
     TkClosePar      reduce using rule 43 (expr -> expr TkMinus expr .)
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
 
   ! TkMult          [ reduce using rule 43 (expr -> expr TkMinus expr .) ]
   ! TkApp           [ reduce using rule 43 (expr -> expr TkMinus expr .) ]
-  ! TkPlus          [ shift and go to state 54 ]
-  ! TkMinus         [ shift and go to state 55 ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkPlus          [ shift and go to state 50 ]
+  ! TkMinus         [ shift and go to state 51 ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 80
+state 76
 
     (44) expr -> expr TkMult expr .
     (42) expr -> expr . TkPlus expr
@@ -2317,6 +2242,7 @@ state 80
     TkComma         reduce using rule 44 (expr -> expr TkMult expr .)
     TkTwoPoints     reduce using rule 44 (expr -> expr TkMult expr .)
     TkSemicolon     reduce using rule 44 (expr -> expr TkMult expr .)
+    TkCBlock        reduce using rule 44 (expr -> expr TkMult expr .)
     TkGuard         reduce using rule 44 (expr -> expr TkMult expr .)
     TkNot           reduce using rule 44 (expr -> expr TkMult expr .)
     TkOpenPar       reduce using rule 44 (expr -> expr TkMult expr .)
@@ -2329,25 +2255,25 @@ state 80
     TkEnd           reduce using rule 44 (expr -> expr TkMult expr .)
     TkArrow         reduce using rule 44 (expr -> expr TkMult expr .)
     TkClosePar      reduce using rule 44 (expr -> expr TkMult expr .)
-    TkApp           shift and go to state 65
+    TkApp           shift and go to state 61
 
   ! TkApp           [ reduce using rule 44 (expr -> expr TkMult expr .) ]
-  ! TkPlus          [ shift and go to state 54 ]
-  ! TkMinus         [ shift and go to state 55 ]
-  ! TkMult          [ shift and go to state 56 ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkPlus          [ shift and go to state 50 ]
+  ! TkMinus         [ shift and go to state 51 ]
+  ! TkMult          [ shift and go to state 52 ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 81
+state 77
 
     (45) expr -> expr TkAnd expr .
     (42) expr -> expr . TkPlus expr
@@ -2367,9 +2293,9 @@ state 81
 
     TkAnd           reduce using rule 45 (expr -> expr TkAnd expr .)
     TkOr            reduce using rule 45 (expr -> expr TkAnd expr .)
-    TkComma         reduce using rule 45 (expr -> expr TkAnd expr .)
     TkTwoPoints     reduce using rule 45 (expr -> expr TkAnd expr .)
     TkSemicolon     reduce using rule 45 (expr -> expr TkAnd expr .)
+    TkCBlock        reduce using rule 45 (expr -> expr TkAnd expr .)
     TkGuard         reduce using rule 45 (expr -> expr TkAnd expr .)
     TkNot           reduce using rule 45 (expr -> expr TkAnd expr .)
     TkOpenPar       reduce using rule 45 (expr -> expr TkAnd expr .)
@@ -2382,16 +2308,17 @@ state 81
     TkEnd           reduce using rule 45 (expr -> expr TkAnd expr .)
     TkArrow         reduce using rule 45 (expr -> expr TkAnd expr .)
     TkClosePar      reduce using rule 45 (expr -> expr TkAnd expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkMinus         [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
@@ -2403,13 +2330,13 @@ state 81
   ! TkLeq           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkGeq           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkApp           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 82
+state 78
 
     (46) expr -> expr TkOr expr .
     (42) expr -> expr . TkPlus expr
@@ -2428,9 +2355,9 @@ state 82
     (63) expr -> expr . TkTwoPoints expr
 
     TkOr            reduce using rule 46 (expr -> expr TkOr expr .)
-    TkComma         reduce using rule 46 (expr -> expr TkOr expr .)
     TkTwoPoints     reduce using rule 46 (expr -> expr TkOr expr .)
     TkSemicolon     reduce using rule 46 (expr -> expr TkOr expr .)
+    TkCBlock        reduce using rule 46 (expr -> expr TkOr expr .)
     TkGuard         reduce using rule 46 (expr -> expr TkOr expr .)
     TkNot           reduce using rule 46 (expr -> expr TkOr expr .)
     TkOpenPar       reduce using rule 46 (expr -> expr TkOr expr .)
@@ -2443,17 +2370,18 @@ state 82
     TkEnd           reduce using rule 46 (expr -> expr TkOr expr .)
     TkArrow         reduce using rule 46 (expr -> expr TkOr expr .)
     TkClosePar      reduce using rule 46 (expr -> expr TkOr expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkMinus         [ reduce using rule 46 (expr -> expr TkOr expr .) ]
@@ -2466,12 +2394,12 @@ state 82
   ! TkLeq           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkGeq           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkApp           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 46 (expr -> expr TkOr expr .) ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 83
+state 79
 
     (47) expr -> expr TkEqual expr .
     (42) expr -> expr . TkPlus expr
@@ -2497,9 +2425,9 @@ state 83
     TkGreater       reduce using rule 47 (expr -> expr TkEqual expr .)
     TkLeq           reduce using rule 47 (expr -> expr TkEqual expr .)
     TkGeq           reduce using rule 47 (expr -> expr TkEqual expr .)
-    TkComma         reduce using rule 47 (expr -> expr TkEqual expr .)
     TkTwoPoints     reduce using rule 47 (expr -> expr TkEqual expr .)
     TkSemicolon     reduce using rule 47 (expr -> expr TkEqual expr .)
+    TkCBlock        reduce using rule 47 (expr -> expr TkEqual expr .)
     TkGuard         reduce using rule 47 (expr -> expr TkEqual expr .)
     TkNot           reduce using rule 47 (expr -> expr TkEqual expr .)
     TkOpenPar       reduce using rule 47 (expr -> expr TkEqual expr .)
@@ -2512,28 +2440,29 @@ state 83
     TkEnd           reduce using rule 47 (expr -> expr TkEqual expr .)
     TkArrow         reduce using rule 47 (expr -> expr TkEqual expr .)
     TkClosePar      reduce using rule 47 (expr -> expr TkEqual expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkMinus         [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkMult          [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkApp           [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 84
+state 80
 
     (48) expr -> expr TkNEqual expr .
     (42) expr -> expr . TkPlus expr
@@ -2559,9 +2488,9 @@ state 84
     TkGreater       reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkLeq           reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkGeq           reduce using rule 48 (expr -> expr TkNEqual expr .)
-    TkComma         reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkTwoPoints     reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkSemicolon     reduce using rule 48 (expr -> expr TkNEqual expr .)
+    TkCBlock        reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkGuard         reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkNot           reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkOpenPar       reduce using rule 48 (expr -> expr TkNEqual expr .)
@@ -2574,28 +2503,29 @@ state 84
     TkEnd           reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkArrow         reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkClosePar      reduce using rule 48 (expr -> expr TkNEqual expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkMinus         [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkMult          [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkApp           [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 85
+state 81
 
     (49) expr -> expr TkLess expr .
     (42) expr -> expr . TkPlus expr
@@ -2621,9 +2551,9 @@ state 85
     TkGreater       reduce using rule 49 (expr -> expr TkLess expr .)
     TkLeq           reduce using rule 49 (expr -> expr TkLess expr .)
     TkGeq           reduce using rule 49 (expr -> expr TkLess expr .)
-    TkComma         reduce using rule 49 (expr -> expr TkLess expr .)
     TkTwoPoints     reduce using rule 49 (expr -> expr TkLess expr .)
     TkSemicolon     reduce using rule 49 (expr -> expr TkLess expr .)
+    TkCBlock        reduce using rule 49 (expr -> expr TkLess expr .)
     TkGuard         reduce using rule 49 (expr -> expr TkLess expr .)
     TkNot           reduce using rule 49 (expr -> expr TkLess expr .)
     TkOpenPar       reduce using rule 49 (expr -> expr TkLess expr .)
@@ -2636,28 +2566,29 @@ state 85
     TkEnd           reduce using rule 49 (expr -> expr TkLess expr .)
     TkArrow         reduce using rule 49 (expr -> expr TkLess expr .)
     TkClosePar      reduce using rule 49 (expr -> expr TkLess expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkMinus         [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkMult          [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkApp           [ reduce using rule 49 (expr -> expr TkLess expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 49 (expr -> expr TkLess expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 86
+state 82
 
     (50) expr -> expr TkGreater expr .
     (42) expr -> expr . TkPlus expr
@@ -2683,9 +2614,9 @@ state 86
     TkGreater       reduce using rule 50 (expr -> expr TkGreater expr .)
     TkLeq           reduce using rule 50 (expr -> expr TkGreater expr .)
     TkGeq           reduce using rule 50 (expr -> expr TkGreater expr .)
-    TkComma         reduce using rule 50 (expr -> expr TkGreater expr .)
     TkTwoPoints     reduce using rule 50 (expr -> expr TkGreater expr .)
     TkSemicolon     reduce using rule 50 (expr -> expr TkGreater expr .)
+    TkCBlock        reduce using rule 50 (expr -> expr TkGreater expr .)
     TkGuard         reduce using rule 50 (expr -> expr TkGreater expr .)
     TkNot           reduce using rule 50 (expr -> expr TkGreater expr .)
     TkOpenPar       reduce using rule 50 (expr -> expr TkGreater expr .)
@@ -2698,28 +2629,29 @@ state 86
     TkEnd           reduce using rule 50 (expr -> expr TkGreater expr .)
     TkArrow         reduce using rule 50 (expr -> expr TkGreater expr .)
     TkClosePar      reduce using rule 50 (expr -> expr TkGreater expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkMinus         [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkMult          [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkApp           [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 87
+state 83
 
     (51) expr -> expr TkLeq expr .
     (42) expr -> expr . TkPlus expr
@@ -2745,9 +2677,9 @@ state 87
     TkGreater       reduce using rule 51 (expr -> expr TkLeq expr .)
     TkLeq           reduce using rule 51 (expr -> expr TkLeq expr .)
     TkGeq           reduce using rule 51 (expr -> expr TkLeq expr .)
-    TkComma         reduce using rule 51 (expr -> expr TkLeq expr .)
     TkTwoPoints     reduce using rule 51 (expr -> expr TkLeq expr .)
     TkSemicolon     reduce using rule 51 (expr -> expr TkLeq expr .)
+    TkCBlock        reduce using rule 51 (expr -> expr TkLeq expr .)
     TkGuard         reduce using rule 51 (expr -> expr TkLeq expr .)
     TkNot           reduce using rule 51 (expr -> expr TkLeq expr .)
     TkOpenPar       reduce using rule 51 (expr -> expr TkLeq expr .)
@@ -2760,28 +2692,29 @@ state 87
     TkEnd           reduce using rule 51 (expr -> expr TkLeq expr .)
     TkArrow         reduce using rule 51 (expr -> expr TkLeq expr .)
     TkClosePar      reduce using rule 51 (expr -> expr TkLeq expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkMinus         [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkMult          [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkApp           [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 88
+state 84
 
     (52) expr -> expr TkGeq expr .
     (42) expr -> expr . TkPlus expr
@@ -2807,9 +2740,9 @@ state 88
     TkGreater       reduce using rule 52 (expr -> expr TkGeq expr .)
     TkLeq           reduce using rule 52 (expr -> expr TkGeq expr .)
     TkGeq           reduce using rule 52 (expr -> expr TkGeq expr .)
-    TkComma         reduce using rule 52 (expr -> expr TkGeq expr .)
     TkTwoPoints     reduce using rule 52 (expr -> expr TkGeq expr .)
     TkSemicolon     reduce using rule 52 (expr -> expr TkGeq expr .)
+    TkCBlock        reduce using rule 52 (expr -> expr TkGeq expr .)
     TkGuard         reduce using rule 52 (expr -> expr TkGeq expr .)
     TkNot           reduce using rule 52 (expr -> expr TkGeq expr .)
     TkOpenPar       reduce using rule 52 (expr -> expr TkGeq expr .)
@@ -2822,28 +2755,29 @@ state 88
     TkEnd           reduce using rule 52 (expr -> expr TkGeq expr .)
     TkArrow         reduce using rule 52 (expr -> expr TkGeq expr .)
     TkClosePar      reduce using rule 52 (expr -> expr TkGeq expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkApp           shift and go to state 65
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
 
   ! TkPlus          [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkMinus         [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkMult          [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkApp           [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkComma         [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 89
+state 85
 
     (53) expr -> expr TkApp expr .
     (42) expr -> expr . TkPlus expr
@@ -2876,6 +2810,7 @@ state 89
     TkComma         reduce using rule 53 (expr -> expr TkApp expr .)
     TkTwoPoints     reduce using rule 53 (expr -> expr TkApp expr .)
     TkSemicolon     reduce using rule 53 (expr -> expr TkApp expr .)
+    TkCBlock        reduce using rule 53 (expr -> expr TkApp expr .)
     TkGuard         reduce using rule 53 (expr -> expr TkApp expr .)
     TkNot           reduce using rule 53 (expr -> expr TkApp expr .)
     TkOpenPar       reduce using rule 53 (expr -> expr TkApp expr .)
@@ -2889,23 +2824,23 @@ state 89
     TkArrow         reduce using rule 53 (expr -> expr TkApp expr .)
     TkClosePar      reduce using rule 53 (expr -> expr TkApp expr .)
 
-  ! TkPlus          [ shift and go to state 54 ]
-  ! TkMinus         [ shift and go to state 55 ]
-  ! TkMult          [ shift and go to state 56 ]
-  ! TkAnd           [ shift and go to state 57 ]
-  ! TkOr            [ shift and go to state 58 ]
-  ! TkEqual         [ shift and go to state 59 ]
-  ! TkNEqual        [ shift and go to state 60 ]
-  ! TkLess          [ shift and go to state 61 ]
-  ! TkGreater       [ shift and go to state 62 ]
-  ! TkLeq           [ shift and go to state 63 ]
-  ! TkGeq           [ shift and go to state 64 ]
-  ! TkApp           [ shift and go to state 65 ]
-  ! TkComma         [ shift and go to state 66 ]
-  ! TkTwoPoints     [ shift and go to state 67 ]
+  ! TkPlus          [ shift and go to state 50 ]
+  ! TkMinus         [ shift and go to state 51 ]
+  ! TkMult          [ shift and go to state 52 ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkApp           [ shift and go to state 61 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 90
+state 86
 
     (62) expr -> expr TkComma expr .
     (42) expr -> expr . TkPlus expr
@@ -2923,21 +2858,18 @@ state 90
     (62) expr -> expr . TkComma expr
     (63) expr -> expr . TkTwoPoints expr
 
-  ! shift/reduce conflict for TkPlus resolved as shift
-  ! shift/reduce conflict for TkMinus resolved as shift
-  ! shift/reduce conflict for TkMult resolved as shift
-  ! shift/reduce conflict for TkAnd resolved as shift
-  ! shift/reduce conflict for TkOr resolved as shift
-  ! shift/reduce conflict for TkEqual resolved as shift
-  ! shift/reduce conflict for TkNEqual resolved as shift
-  ! shift/reduce conflict for TkLess resolved as shift
-  ! shift/reduce conflict for TkGreater resolved as shift
-  ! shift/reduce conflict for TkLeq resolved as shift
-  ! shift/reduce conflict for TkGeq resolved as shift
-  ! shift/reduce conflict for TkApp resolved as shift
-  ! shift/reduce conflict for TkComma resolved as shift
-  ! shift/reduce conflict for TkTwoPoints resolved as shift
+    TkAnd           reduce using rule 62 (expr -> expr TkComma expr .)
+    TkOr            reduce using rule 62 (expr -> expr TkComma expr .)
+    TkEqual         reduce using rule 62 (expr -> expr TkComma expr .)
+    TkNEqual        reduce using rule 62 (expr -> expr TkComma expr .)
+    TkLess          reduce using rule 62 (expr -> expr TkComma expr .)
+    TkGreater       reduce using rule 62 (expr -> expr TkComma expr .)
+    TkLeq           reduce using rule 62 (expr -> expr TkComma expr .)
+    TkGeq           reduce using rule 62 (expr -> expr TkComma expr .)
+    TkComma         reduce using rule 62 (expr -> expr TkComma expr .)
+    TkTwoPoints     reduce using rule 62 (expr -> expr TkComma expr .)
     TkSemicolon     reduce using rule 62 (expr -> expr TkComma expr .)
+    TkCBlock        reduce using rule 62 (expr -> expr TkComma expr .)
     TkGuard         reduce using rule 62 (expr -> expr TkComma expr .)
     TkNot           reduce using rule 62 (expr -> expr TkComma expr .)
     TkOpenPar       reduce using rule 62 (expr -> expr TkComma expr .)
@@ -2950,38 +2882,28 @@ state 90
     TkEnd           reduce using rule 62 (expr -> expr TkComma expr .)
     TkArrow         reduce using rule 62 (expr -> expr TkComma expr .)
     TkClosePar      reduce using rule 62 (expr -> expr TkComma expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkApp           shift and go to state 61
 
   ! TkPlus          [ reduce using rule 62 (expr -> expr TkComma expr .) ]
   ! TkMinus         [ reduce using rule 62 (expr -> expr TkComma expr .) ]
   ! TkMult          [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkAnd           [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkOr            [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkEqual         [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkNEqual        [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkLess          [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkGreater       [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkLeq           [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkGeq           [ reduce using rule 62 (expr -> expr TkComma expr .) ]
   ! TkApp           [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkComma         [ reduce using rule 62 (expr -> expr TkComma expr .) ]
-  ! TkTwoPoints     [ reduce using rule 62 (expr -> expr TkComma expr .) ]
+  ! TkAnd           [ shift and go to state 53 ]
+  ! TkOr            [ shift and go to state 54 ]
+  ! TkEqual         [ shift and go to state 55 ]
+  ! TkNEqual        [ shift and go to state 56 ]
+  ! TkLess          [ shift and go to state 57 ]
+  ! TkGreater       [ shift and go to state 58 ]
+  ! TkLeq           [ shift and go to state 59 ]
+  ! TkGeq           [ shift and go to state 60 ]
+  ! TkComma         [ shift and go to state 62 ]
+  ! TkTwoPoints     [ shift and go to state 63 ]
 
 
-state 91
+state 87
 
     (63) expr -> expr TkTwoPoints expr .
     (42) expr -> expr . TkPlus expr
@@ -3014,6 +2936,7 @@ state 91
   ! shift/reduce conflict for TkComma resolved as shift
   ! shift/reduce conflict for TkTwoPoints resolved as shift
     TkSemicolon     reduce using rule 63 (expr -> expr TkTwoPoints expr .)
+    TkCBlock        reduce using rule 63 (expr -> expr TkTwoPoints expr .)
     TkGuard         reduce using rule 63 (expr -> expr TkTwoPoints expr .)
     TkNot           reduce using rule 63 (expr -> expr TkTwoPoints expr .)
     TkOpenPar       reduce using rule 63 (expr -> expr TkTwoPoints expr .)
@@ -3026,20 +2949,20 @@ state 91
     TkEnd           reduce using rule 63 (expr -> expr TkTwoPoints expr .)
     TkArrow         reduce using rule 63 (expr -> expr TkTwoPoints expr .)
     TkClosePar      reduce using rule 63 (expr -> expr TkTwoPoints expr .)
-    TkPlus          shift and go to state 54
-    TkMinus         shift and go to state 55
-    TkMult          shift and go to state 56
-    TkAnd           shift and go to state 57
-    TkOr            shift and go to state 58
-    TkEqual         shift and go to state 59
-    TkNEqual        shift and go to state 60
-    TkLess          shift and go to state 61
-    TkGreater       shift and go to state 62
-    TkLeq           shift and go to state 63
-    TkGeq           shift and go to state 64
-    TkApp           shift and go to state 65
-    TkComma         shift and go to state 66
-    TkTwoPoints     shift and go to state 67
+    TkPlus          shift and go to state 50
+    TkMinus         shift and go to state 51
+    TkMult          shift and go to state 52
+    TkAnd           shift and go to state 53
+    TkOr            shift and go to state 54
+    TkEqual         shift and go to state 55
+    TkNEqual        shift and go to state 56
+    TkLess          shift and go to state 57
+    TkGreater       shift and go to state 58
+    TkLeq           shift and go to state 59
+    TkGeq           shift and go to state 60
+    TkApp           shift and go to state 61
+    TkComma         shift and go to state 62
+    TkTwoPoints     shift and go to state 63
 
   ! TkPlus          [ reduce using rule 63 (expr -> expr TkTwoPoints expr .) ]
   ! TkMinus         [ reduce using rule 63 (expr -> expr TkTwoPoints expr .) ]
@@ -3057,7 +2980,7 @@ state 91
   ! TkTwoPoints     [ reduce using rule 63 (expr -> expr TkTwoPoints expr .) ]
 
 
-state 92
+state 88
 
     (56) expr -> TkOpenPar expr TkClosePar .
 
@@ -3076,6 +2999,7 @@ state 92
     TkComma         reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
     TkTwoPoints     reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
     TkSemicolon     reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
+    TkCBlock        reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
     TkGuard         reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
     TkNot           reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
     TkOpenPar       reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
@@ -3090,7 +3014,7 @@ state 92
     TkClosePar      reduce using rule 56 (expr -> TkOpenPar expr TkClosePar .)
 
 
-state 93
+state 89
 
     (31) if_guard_clause -> expr TkArrow body_sequencing .
 
@@ -3106,7 +3030,7 @@ state 93
     TkFi            reduce using rule 31 (if_guard_clause -> expr TkArrow body_sequencing .)
 
 
-state 94
+state 90
 
     (33) body_sequencing -> body_stmt_item .
     (34) body_sequencing -> body_stmt_item . TkSemicolon body_sequencing
@@ -3122,10 +3046,10 @@ state 94
     TkId            reduce using rule 33 (body_sequencing -> body_stmt_item .)
     TkFi            reduce using rule 33 (body_sequencing -> body_stmt_item .)
     TkEnd           reduce using rule 33 (body_sequencing -> body_stmt_item .)
-    TkSemicolon     shift and go to state 105
+    TkSemicolon     shift and go to state 101
 
 
-state 95
+state 91
 
     (35) body_stmt_item -> assignment_stmt .
 
@@ -3143,7 +3067,7 @@ state 95
     TkEnd           reduce using rule 35 (body_stmt_item -> assignment_stmt .)
 
 
-state 96
+state 92
 
     (36) body_stmt_item -> print_stmt .
 
@@ -3161,7 +3085,7 @@ state 96
     TkEnd           reduce using rule 36 (body_stmt_item -> print_stmt .)
 
 
-state 97
+state 93
 
     (37) body_stmt_item -> skip_stmt .
 
@@ -3179,7 +3103,7 @@ state 97
     TkEnd           reduce using rule 37 (body_stmt_item -> skip_stmt .)
 
 
-state 98
+state 94
 
     (38) body_stmt_item -> return_stmt .
 
@@ -3197,7 +3121,7 @@ state 98
     TkEnd           reduce using rule 38 (body_stmt_item -> return_stmt .)
 
 
-state 99
+state 95
 
     (39) body_stmt_item -> if_stmt .
 
@@ -3215,7 +3139,7 @@ state 99
     TkEnd           reduce using rule 39 (body_stmt_item -> if_stmt .)
 
 
-state 100
+state 96
 
     (40) body_stmt_item -> while_stmt .
 
@@ -3233,7 +3157,7 @@ state 100
     TkEnd           reduce using rule 40 (body_stmt_item -> while_stmt .)
 
 
-state 101
+state 97
 
     (41) body_stmt_item -> block .
 
@@ -3251,7 +3175,7 @@ state 101
     TkEnd           reduce using rule 41 (body_stmt_item -> block .)
 
 
-state 102
+state 98
 
     (32) if_guard_clause -> TkGuard expr TkArrow . body_sequencing
     (33) body_sequencing -> . body_stmt_item
@@ -3279,34 +3203,34 @@ state 102
     TkWhile         shift and go to state 23
     TkOBlock        shift and go to state 3
 
-    body_sequencing                shift and go to state 106
-    body_stmt_item                 shift and go to state 94
-    assignment_stmt                shift and go to state 95
-    print_stmt                     shift and go to state 96
-    skip_stmt                      shift and go to state 97
-    return_stmt                    shift and go to state 98
-    if_stmt                        shift and go to state 99
-    while_stmt                     shift and go to state 100
-    block                          shift and go to state 101
+    body_sequencing                shift and go to state 102
+    body_stmt_item                 shift and go to state 90
+    assignment_stmt                shift and go to state 91
+    print_stmt                     shift and go to state 92
+    skip_stmt                      shift and go to state 93
+    return_stmt                    shift and go to state 94
+    if_stmt                        shift and go to state 95
+    while_stmt                     shift and go to state 96
+    block                          shift and go to state 97
 
-state 103
+state 99
 
     (23) while_stmt -> TkWhile expr TkArrow body_sequencing . TkEnd
 
-    TkEnd           shift and go to state 107
+    TkEnd           shift and go to state 103
 
 
-state 104
+state 100
 
     (16) declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum TkCBracket . declare_id_list
     (17) declare_id_list -> . TkId
     (18) declare_id_list -> . TkId TkComma declare_id_list
 
-    TkId            shift and go to state 32
+    TkId            shift and go to state 27
 
-    declare_id_list                shift and go to state 108
+    declare_id_list                shift and go to state 104
 
-state 105
+state 101
 
     (34) body_sequencing -> body_stmt_item TkSemicolon . body_sequencing
     (33) body_sequencing -> . body_stmt_item
@@ -3334,17 +3258,17 @@ state 105
     TkWhile         shift and go to state 23
     TkOBlock        shift and go to state 3
 
-    body_stmt_item                 shift and go to state 94
-    body_sequencing                shift and go to state 109
-    assignment_stmt                shift and go to state 95
-    print_stmt                     shift and go to state 96
-    skip_stmt                      shift and go to state 97
-    return_stmt                    shift and go to state 98
-    if_stmt                        shift and go to state 99
-    while_stmt                     shift and go to state 100
-    block                          shift and go to state 101
+    body_stmt_item                 shift and go to state 90
+    body_sequencing                shift and go to state 105
+    assignment_stmt                shift and go to state 91
+    print_stmt                     shift and go to state 92
+    skip_stmt                      shift and go to state 93
+    return_stmt                    shift and go to state 94
+    if_stmt                        shift and go to state 95
+    while_stmt                     shift and go to state 96
+    block                          shift and go to state 97
 
-state 106
+state 102
 
     (32) if_guard_clause -> TkGuard expr TkArrow body_sequencing .
 
@@ -3360,21 +3284,12 @@ state 106
     TkFi            reduce using rule 32 (if_guard_clause -> TkGuard expr TkArrow body_sequencing .)
 
 
-state 107
+state 103
 
     (23) while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .
 
-    TkInt           reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkBool          reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkFunction      reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkId            reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkPrint         reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkSkip          reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkReturn        reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkIf            reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkWhile         reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
-    TkCBlock        reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkSemicolon     reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
+    TkCBlock        reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkGuard         reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkMinus         reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkNot           reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
@@ -3383,18 +3298,20 @@ state 107
     TkTrue          reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkFalse         reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkString        reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
+    TkId            reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkFi            reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
     TkEnd           reduce using rule 23 (while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd .)
 
 
-state 108
+state 104
 
     (16) declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list .
 
     TkSemicolon     reduce using rule 16 (declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list .)
+    TkCBlock        reduce using rule 16 (declaration_stmt -> TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list .)
 
 
-state 109
+state 105
 
     (34) body_sequencing -> body_stmt_item TkSemicolon body_sequencing .
 
@@ -3413,34 +3330,20 @@ state 109
 WARNING: 
 WARNING: Conflicts:
 WARNING: 
-WARNING: shift/reduce conflict for TkMinus in state 36 resolved as shift
-WARNING: shift/reduce conflict for TkMinus in state 45 resolved as shift
-WARNING: shift/reduce conflict for TkMinus in state 53 resolved as shift
-WARNING: shift/reduce conflict for TkPlus in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkMinus in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkMult in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkAnd in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkOr in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkEqual in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkNEqual in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkLess in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkGreater in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkLeq in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkGeq in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkApp in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkComma in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkTwoPoints in state 90 resolved as shift
-WARNING: shift/reduce conflict for TkPlus in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkMinus in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkMult in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkAnd in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkOr in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkEqual in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkNEqual in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkLess in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkGreater in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkLeq in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkGeq in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkApp in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkComma in state 91 resolved as shift
-WARNING: shift/reduce conflict for TkTwoPoints in state 91 resolved as shift
+WARNING: shift/reduce conflict for TkMinus in state 31 resolved as shift
+WARNING: shift/reduce conflict for TkMinus in state 40 resolved as shift
+WARNING: shift/reduce conflict for TkMinus in state 49 resolved as shift
+WARNING: shift/reduce conflict for TkPlus in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkMinus in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkMult in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkAnd in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkOr in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkEqual in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkNEqual in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkLess in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkGreater in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkLeq in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkGeq in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkApp in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkComma in state 87 resolved as shift
+WARNING: shift/reduce conflict for TkTwoPoints in state 87 resolved as shift

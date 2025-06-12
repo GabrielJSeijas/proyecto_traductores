@@ -10,6 +10,7 @@ precedence = (
     ('left', 'TkAnd'),
     ('right', 'TkNot'),
     ('nonassoc', 'TkLess', 'TkGreater', 'TkLeq', 'TkGeq', 'TkEqual', 'TkNEqual'), # Comparison
+    ('left', 'TkComma'), # Comma
     ('left', 'TkPlus', 'TkMinus'),
     ('left', 'TkMult'), # Times
     # ('left', 'TkDiv', 'TkMod'), # Si los añades
@@ -82,52 +83,73 @@ def p_block(p):
     # 2. Construir el nodo Declare con la lógica de anidamiento condicional
     if declarations:
         declare_node = Declare()
-        seq_decl_node = Sequencing() # El Sequencing principal de nivel 1
-
-        var_decls = [d for d in declarations if 'function' not in d]
-        func_decls = [d for d in declarations if 'function' in d]
-
-        # --- AQUÍ ESTÁ LA LÓGICA CLAVE Y CORREGIDA ---
-        # Solo agrupamos en un Sequencing anidado si hay MÁS DE UNA declaración de variable.
-        if len(var_decls) > 1:
-            var_seq_node = Sequencing() # El Sequencing anidado de nivel 2
-            for decl_str in var_decls:
-                var_seq_node.add_child(decl_str)
-            seq_decl_node.add_child(var_seq_node)
-        elif len(var_decls) == 1:
-            # Si solo hay una, la añadimos directamente al Sequencing principal.
-            seq_decl_node.add_child(var_decls[0])
-        # Si no hay var_decls, no hacemos nada.
         
-        # Añadir declaraciones de funciones como hermanas
-        for func_decl in func_decls:
-            seq_decl_node.add_child(func_decl)
+        # --- LÓGICA CLAVE CORREGIDA ---
+        # Si solo hay UNA declaración, la añadimos directamente al nodo Declare.
+        if len(declarations) == 1:
+            declare_node.add_child(declarations[0])
+        else:
+            # Si hay MÁS de una, usamos la lógica de anidamiento completa.
+            seq_decl_node = Sequencing()
+
+            var_decls = [d for d in declarations if 'function' not in d]
+            func_decls = [d for d in declarations if 'function' in d]
+
+            # Si hay más de una declaración de variable, se anidan en su propio Sequencing.
+            if len(var_decls) > 1:
+                var_seq_node = Sequencing()
+                for decl_str in var_decls:
+                    var_seq_node.add_child(decl_str)
+                seq_decl_node.add_child(var_seq_node)
+            elif len(var_decls) == 1:
+                # Si solo hay una, se añade directamente.
+                seq_decl_node.add_child(var_decls[0])
+            
+            # Las declaraciones de función se añaden como hermanas.
+            for func_decl in func_decls:
+                seq_decl_node.add_child(func_decl)
+            
+            declare_node.add_child(seq_decl_node)
         
-        declare_node.add_child(seq_decl_node)
         block_node.add_child(declare_node)
     
     # 3. Construir sentencias (esta parte ya estaba bien y no se toca)
     if statements:
-        if len(statements) == 1 and isinstance(statements[0], If):
+        # REGLA FINAL: Si hay UNA SOLA sentencia en todo el bloque,
+        # sin importar de qué tipo sea (If, While, Print, Asig, etc.),
+        # se añade directamente como hijo del Block.
+        if len(statements) == 1:
             block_node.add_child(statements[0])
         else:
-            outer_seq = Sequencing()
-            inner_seq = Sequencing()
-            
+            # Si hay MÁS DE UNA sentencia, aplicamos la lógica de anidamiento
+            # que ya distingue entre sentencias simples y de control de flujo.
+            simple_stmts = []
             control_flow_stmts = []
             for stmt in statements:
-                if isinstance(stmt, (While, If)):
+                if isinstance(stmt, (If, While)):
                     control_flow_stmts.append(stmt)
-                else:
-                    inner_seq.add_child(stmt)
+                else: # Asig, Print, Skip, etc.
+                    simple_stmts.append(stmt)
             
-            if inner_seq.children:
-                outer_seq.add_child(inner_seq)
-            
-            for stmt in control_flow_stmts:
-                outer_seq.add_child(stmt)
-            
-            block_node.add_child(outer_seq)
+            # Si hay sentencias de control de flujo, usamos la estructura anidada.
+            if control_flow_stmts:
+                outer_seq = Sequencing()
+                if simple_stmts:
+                    inner_seq = Sequencing()
+                    for s in simple_stmts:
+                        inner_seq.add_child(s)
+                    outer_seq.add_child(inner_seq)
+                
+                for cf_stmt in control_flow_stmts:
+                    outer_seq.add_child(cf_stmt)
+                
+                block_node.add_child(outer_seq)
+            else:
+                # Si SOLO hay sentencias simples (pero más de una), usamos un único wrapper.
+                seq_node = Sequencing()
+                for s in simple_stmts:
+                    seq_node.add_child(s)
+                block_node.add_child(seq_node)
 
     p[0] = block_node
 
@@ -137,23 +159,25 @@ def p_opt_stmt_list(p):
     p[0] = p[1] if p[1] else []
 
 def p_stmt_list(p):
-    '''stmt_list : stmt_item
-                 | stmt_item stmt_list'''
+    '''stmt_list : statement
+                 | statement TkSemicolon stmt_list'''
     if len(p) == 2:
+        # Caso base: una sola instrucción, o la última de una secuencia.
         p[0] = [p[1]]
     else:
-        p[0] = [p[1]] + p[2] # Mantener el orden original
+        # Caso recursivo: una instrucción, un ';', y el resto de la lista.
+        p[0] = [p[1]] + p[3]
 
 # --- Tipos de Sentencias (stmt_item) ---
-def p_stmt_item(p):
-    '''stmt_item : declaration_stmt TkSemicolon
-                 | assignment_stmt TkSemicolon
-                 | print_stmt TkSemicolon
-                 | skip_stmt TkSemicolon
-                 | return_stmt TkSemicolon
+def p_statement(p):
+    '''statement : declaration_stmt
+                 | assignment_stmt
+                 | print_stmt
+                 | skip_stmt
+                 | return_stmt
                  | if_stmt
                  | while_stmt'''
-    p[0] = p[1] # El TkSemicolon es consumido, el nodo es p[1]
+    p[0] = p[1]
 
 # --- Declaraciones ---
 def p_declaration_stmt(p):
