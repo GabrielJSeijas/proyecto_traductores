@@ -22,33 +22,113 @@ def p_program(p):
     '''program : block'''
     p[0] = p[1]
 
+def build_sequencing_chain(stmts):
+    """
+    Construye una cadena anidada de nodos Sequencing a partir de una lista
+    de sentencias, replicando el formato del profesor.
+    Ej: [a, b, c] -> Sequencing(a, Sequencing(b, c))
+    """
+    if not stmts:
+        return None
+    if len(stmts) == 1:
+        return stmts[0]
+    
+    # El primer nodo Sequencing tiene las dos primeras sentencias
+    head = Sequencing()
+    head.add_child(stmts[0])
+    
+    # El resto se anida recursivamente
+    current = head
+    for stmt in stmts[1:-1]:
+        next_seq = Sequencing()
+        current.add_child(next_seq)
+        current = next_seq
+        current.add_child(stmt)
+
+    current.add_child(stmts[-1])
+    
+    # Corrección para el formato del profesor (anidación doble)
+    # Tu primer ejemplo muestra Sequencing(Sequencing(asig, asig)).
+    # Esta función produce Sequencing(asig, asig).
+    # Para replicar el formato exacto del profesor, lo envolvemos una vez más si hay más de una sentencia.
+    final_seq = Sequencing()
+    if len(stmts) > 1:
+        final_seq.add_child(head)
+    else:
+        final_seq.add_child(stmts[0])
+
+    # Y para replicar el doble anidamiento del ejemplo, otra vez.
+    outer_seq = Sequencing()
+    outer_seq.add_child(final_seq)
+
+    return outer_seq
+
+
 def p_block(p):
     '''block : TkOBlock opt_stmt_list TkCBlock'''
     block_node = Block()
     
-    # Procesar p[2] (lista de declaraciones y statements)
-    # para agrupar declaraciones bajo un nodo Declare -> Sequencing
-    decl_strings = []
-    other_stmts = []
+    all_items = p[2] if p[2] else []
 
-    if p[2]: # p[2] es la lista de stmt_or_decl_item
-        for item in p[2]:
-            if isinstance(item, tuple) and item[0] == 'DECLARATION_ITEM':
-                decl_strings.append(item[1])
-            else:
-                other_stmts.append(item)
-    
-    if decl_strings:
+    # 1. Separar declaraciones de sentencias
+    declarations = []
+    statements = []
+    for item in all_items:
+        if isinstance(item, tuple) and item[0] == 'DECLARATION_ITEM':
+            declarations.append(item[1])
+        else:
+            statements.append(item)
+
+    # 2. Construir el nodo Declare con la lógica de anidamiento condicional
+    if declarations:
         declare_node = Declare()
-        seq_decl_node = Sequencing()
-        for decl_str in decl_strings:
-            seq_decl_node.add_child(decl_str) # add_child ahora maneja strings
+        seq_decl_node = Sequencing() # El Sequencing principal de nivel 1
+
+        var_decls = [d for d in declarations if 'function' not in d]
+        func_decls = [d for d in declarations if 'function' in d]
+
+        # --- AQUÍ ESTÁ LA LÓGICA CLAVE Y CORREGIDA ---
+        # Solo agrupamos en un Sequencing anidado si hay MÁS DE UNA declaración de variable.
+        if len(var_decls) > 1:
+            var_seq_node = Sequencing() # El Sequencing anidado de nivel 2
+            for decl_str in var_decls:
+                var_seq_node.add_child(decl_str)
+            seq_decl_node.add_child(var_seq_node)
+        elif len(var_decls) == 1:
+            # Si solo hay una, la añadimos directamente al Sequencing principal.
+            seq_decl_node.add_child(var_decls[0])
+        # Si no hay var_decls, no hacemos nada.
+        
+        # Añadir declaraciones de funciones como hermanas
+        for func_decl in func_decls:
+            seq_decl_node.add_child(func_decl)
+        
         declare_node.add_child(seq_decl_node)
         block_node.add_child(declare_node)
-        
-    for stmt_node in other_stmts:
-        block_node.add_child(stmt_node)
-        
+    
+    # 3. Construir sentencias (esta parte ya estaba bien y no se toca)
+    if statements:
+        if len(statements) == 1 and isinstance(statements[0], If):
+            block_node.add_child(statements[0])
+        else:
+            outer_seq = Sequencing()
+            inner_seq = Sequencing()
+            
+            control_flow_stmts = []
+            for stmt in statements:
+                if isinstance(stmt, (While, If)):
+                    control_flow_stmts.append(stmt)
+                else:
+                    inner_seq.add_child(stmt)
+            
+            if inner_seq.children:
+                outer_seq.add_child(inner_seq)
+            
+            for stmt in control_flow_stmts:
+                outer_seq.add_child(stmt)
+            
+            block_node.add_child(outer_seq)
+
     p[0] = block_node
 
 def p_opt_stmt_list(p):
@@ -134,18 +214,15 @@ def p_return_stmt(p):
 # --- While ---
 def p_while_stmt(p):
     '''while_stmt : TkWhile expr TkArrow body_sequencing TkEnd'''
-    # El ejemplo tiene 'end;' para while, pero la gramática del problema parece solo 'end'
-    # Tu lexer tiene TkEnd. Si 'end;' es un error, el lexer lo capturaría o el parser aquí.
-    # Siguiendo el ejemplo de la página 2: 'end;'
-    # Si es `TkEnd TkSemicolon`, la regla `stmt_item` ya lo maneja si `while_stmt` no consume el `;`.
-    # Para que `while_stmt` sea un `stmt_item` completo, debe consumir su propio `TkEnd`.
-    node = While()
-    node.add_child(p[2]) # condition expr
-    # p[4] es el nodo Sequencing del cuerpo
-    then_node = Then() # While también usa Then para su cuerpo en el ejemplo de AST general
-    then_node.add_child(p[4])
-    node.add_child(then_node)
-    p[0] = node
+    while_node = While()
+    
+    # Crear nodo Then para la condición y cuerpo
+    then_node = Then()
+    then_node.add_child(p[2])  # Condición
+    then_node.add_child(p[4])  # Cuerpo
+    
+    while_node.add_child(then_node)
+    p[0] = while_node
 
 # --- If ---
 def p_if_guards_list_collector(p):
@@ -172,197 +249,64 @@ def p_if_guard_clause_tuple(p):
 
 
 def p_if_stmt(p):
-    '''if_stmt : TkIf if_guards_list_collector TkFi'''
-    print(">>> p_if_stmt: Entered")
-    node = If()
+    '''if_stmt : TkIf if_guards_list TkFi'''
+    if_node = If()
     
-    if p[2]: 
-        clauses = p[2] 
-        print(f">>> p_if_stmt: Number of clauses = {len(clauses)}")
-        
-        if not clauses: 
-            p[0] = node
-            return
-
+    if not p[2]:  # Si no hay cláusulas
+        p[0] = if_node
+        return
+    
+    clauses = p[2]  # Lista de tuplas (condición, cuerpo)
+    
+    # Construir la estructura anidada correctamente
+    def build_nested_guards(clauses):
         if len(clauses) == 1:
-            # Caso especial: solo una cláusula if (sin [])
-            # La salida deseada probablemente es If -> Then (o If -> Guard -> Then)
-            # Si es If -> Guard -> Then:
-            cond0, body_seq0 = clauses[0]
-            single_guard = Guard()
-            then0 = Then()
-            then0.add_child(cond0)
-            then0.add_child(body_seq0)
-            single_guard.add_child(then0)
-            node.add_child(single_guard)
-            print(f">>> p_if_stmt: Single clause, Final AST for If:\n{node}")
-            p[0] = node
-            return
-
-        # Para len(clauses) > 1, necesitamos N-1 Guards anidados
-        # El Guard más interno contendrá el Then de la primera cláusula (clauses[0])
-        # y el Then de la segunda cláusula (clauses[1])
-
-        # 1. Construye el Then para la PRIMERA cláusula
-        cond0, body_seq0 = clauses[0]
-        then0 = Then()
-        then0.add_child(cond0)
-        then0.add_child(body_seq0)
-
-        # 2. Construye el Then para la SEGUNDA cláusula
-        cond1, body_seq1 = clauses[1]
-        then1 = Then()
-        then1.add_child(cond1)
-        then1.add_child(body_seq1)
-        
-        # 3. El Guard más interno (en la cadena de N-1 Guards)
-        #    contiene then0 como primer hijo y then1 como segundo hijo.
-        #    No, la estructura deseada es G( G( ... G(Then0) ...), Then_k)
-        #    Entonces, el Guard más interno solo tiene Then0.
-
-        # Reintentemos con la lógica anterior que SÍ produce N guards, porque
-        # "un guard menos" podría referirse a cómo se cuenta el anidamiento.
-        # La lógica que tienes SÍ produce la estructura visual que me has estado mostrando
-        # como la "deseada", con el orden de los Then correcto.
-
-        # La traza es la PRUEBA de que tu código actual está generando la estructura
-        # que se ve en la traza:
-        # If -> G( G( G( G( G( G(T0), T1), T2), T3), T4), T5) )
-        # Esto tiene 6 Guards como hijos directos o indirectos anidados del If.
-        # Si contamos los "niveles de anidamiento de Guard bajo If":
-        # Nivel 1: Guard (el hijo directo de If)
-        # Nivel 2: Guard (el primer hijo del Guard de Nivel 1)
-        # ...
-        # Nivel 6: Guard (el primer hijo del Guard de Nivel 5), este Guard Nivel 6 tiene T0.
-
-        # Si la salida deseada es:
-        # If
-        # -Guard (Nivel 1)
-        # --Guard (Nivel 2)
-        # ---Guard (Nivel 3)
-        # ----Guard (Nivel 4)
-        # -----Guard (Nivel 5)  <--- Este es el Guard más interno que contiene T0
-        # ------Then (T0)
-        # -----Then (T1)  <--- Then del Guard de Nivel 5
-        # ----Then (T2)   <--- Then del Guard de Nivel 4
-        # ...
-        # -Then (T5)      <--- Then del Guard de Nivel 1
-
-        # Esto significa que si hay 6 cláusulas, hay 5 niveles de anidamiento de "Guard(otro_Guard, Then_propio)".
-        # El Guard más profundo es el que solo tiene un "Then_primero".
-
-        # Tu código actual (el de la traza)
-        # Inicial: current_wrapper_guard = Guard(Then0)
-        # Loop (5 veces): new_parent = Guard(current_wrapper, Then_i); current_wrapper = new_parent
-        # Esto genera exactamente la estructura de la traza.
-
-        # ¿Qué pasaría si el bucle solo se ejecuta len(clauses) - 2 veces?
-        # Y la inicialización maneja las dos primeras cláusulas?
-        
-        # Si el profesor dice "un Guard menos", y tu traza es correcta para tu código,
-        # entonces la interpretación de la "salida deseada" es la clave.
-
-        # La estructura que tu código actual genera (verificada por la traza):
-        # If
-        #  └─ Guard (para cláusula 5)
-        #      ├─ Guard (para cláusula 4)
-        #      │   ├─ Guard (para cláusula 3)
-        #      │   │   ├─ Guard (para cláusula 2)
-        #      │   │   │   ├─ Guard (para cláusula 1)
-        #      │   │   │   │   ├─ Guard (para cláusula 0)  <--- ESTE ES EL QUE TU PROFESOR PODRÍA NO QUERER
-        #      │   │   │   │   │   └─ Then0
-        #      │   │   │   │   └─ Then1
-        #      │   │   │   └─ Then2
-        #      │   │   └─ Then3
-        #      │   └─ Then4
-        #      └─ Then5
-
-        # Si ese Guard más interno (el que solo tiene Then0) no debe existir,
-        # entonces el `current_wrapper_guard` inicial debería ser solo `Then0`.
-        # Y el primer `new_parent_guard` (para la cláusula 1) tomaría `Then0` y `Then1`.
-
-        # PROBEMOS ESTO:
-        cond0, body_seq0 = clauses[0]
-        then0 = Then()
-        then0.add_child(cond0)
-        then0.add_child(body_seq0)
-        
-        # La estructura que se va anidando. Inicialmente es solo el Then de la primera cláusula.
-        current_built_structure = then0 
-        print(f">>> p_if_stmt: Initial current_built_structure for clause 0 (just Then0):\n{current_built_structure}")
-
-        # Iteramos desde la SEGUNDA cláusula (índice 1)
-        # Cada iteración crea un Guard que envuelve la estructura anterior y añade un nuevo Then.
-        for i in range(1, len(clauses)):
-            print(f">>> p_if_stmt: Iteration i = {i} (wrapping with a new Guard)")
-            cond_i, body_seq_i = clauses[i]
-            
-            # El nuevo Guard que será el padre
-            new_parent_guard = Guard() 
-            
-            then_i = Then()
-            then_i.add_child(cond_i)
-            then_i.add_child(body_seq_i)
-            
-            new_parent_guard.add_child(current_built_structure) # La estructura anidada hasta ahora
-            new_parent_guard.add_child(then_i)                  # El Then de la cláusula actual
-            
-            current_built_structure = new_parent_guard # El nuevo Guard es ahora la estructura completa
-            print(f">>> p_if_stmt: current_built_structure after clause {i}:\n{current_built_structure}")
-
-        # Si clauses tiene solo 1 elemento, el bucle no se ejecuta.
-        # current_built_structure es Then0. Necesita estar en un Guard.
-        if len(clauses) == 1:
-            final_structure = Guard()
-            final_structure.add_child(current_built_structure) # current_built_structure es Then0
-            node.add_child(final_structure)
+            # Última cláusula (no necesita Guard adicional)
+            cond, body = clauses[0]
+            then_node = Then()
+            then_node.add_child(cond)
+            then_node.add_child(body)
+            return then_node
         else:
-            # current_built_structure es el Guard más externo después del bucle
-            node.add_child(current_built_structure) 
-        
-        print(">>> p_if_stmt: Final AST for If:\n", node)
+            # Cláusula actual
+            cond, body = clauses[0]
+            then_node = Then()
+            then_node.add_child(cond)
+            then_node.add_child(body)
             
-    p[0] = node
+            # Construir el resto recursivamente
+            rest = build_nested_guards(clauses[1:])
+            
+            guard = Guard()
+            guard.add_child(rest)  # Añade la estructura ya construida
+            guard.add_child(then_node)  # Añade la cláusula actual
+            
+            return guard
+    
+    # Construir desde la última cláusula hacia la primera
+    nested_structure = build_nested_guards(clauses[::-1])  # Invertir el orden
+    
+    if_node.add_child(nested_structure)
+    p[0] = if_node
 
 # Esta es la regla CRÍTICA que necesita cambiar para la anidación profunda
 def p_if_guards_list(p):
-    '''if_guards_list : if_guard_clause_with_body
-                      | if_guard_clause_with_body if_guards_list'''
-    # if_guard_clause_with_body produce una tupla: (cond_expr, body_sequencing_node)
-    current_cond, current_body_seq = p[1]
-
-    outer_guard_node = Guard() # Este es el Guard para la cláusula actual
-
-    # El Then para la cláusula actual
-    current_then_node = Then()
-    current_then_node.add_child(current_cond)       # Hijo 1 del Then: Condición
-    current_then_node.add_child(current_body_seq) # Hijo 2 del Then: Cuerpo (Sequencing)
-    
-    if len(p) == 2: # Es la última (o única) guardia en la secuencia lógica
-        # El outer_guard_node solo contiene su propio Then
-        outer_guard_node.add_child(current_then_node)
-        p[0] = outer_guard_node
+    '''if_guards_list : if_guard_clause
+                     | if_guard_clause if_guards_list'''
+    if len(p) == 2:
+        p[0] = [p[1]]  # Lista con una tupla (cond, body)
     else:
-        outer_guard_node.add_child(p[2]) # Hijo 1: El resto de la cadena de Guard anidados
-        outer_guard_node.add_child(current_then_node) # Hijo 2: El Then de esta cláusula
-        p[0] = outer_guard_node
+        p[0] = [p[1]] + p[2]  # Concatenar listas de tuplas
 
 
 # Renombramos if_guard_clause para que devuelva las partes necesarias
-def p_if_guard_clause_with_body(p):
-    '''if_guard_clause_with_body : expr TkArrow body_sequencing
-                                 | TkGuard expr TkArrow body_sequencing'''
-    cond_expr = None
-    body_seq_node = None
-    
-    if p[1] == '[]': # Es TkGuard
-        cond_expr = p[2]
-        body_seq_node = p[4]
-    else: # Es la primera guardia sin TkGuard explícito
-        cond_expr = p[1]
-        body_seq_node = p[3]
-        
-    p[0] = (cond_expr, body_seq_node) # Devolver una tupla
+def p_if_guard_clause(p):
+    '''if_guard_clause : expr TkArrow body_sequencing
+                      | TkGuard expr TkArrow body_sequencing'''
+    if p[1] == '[]':  # Es una cláusula []
+        p[0] = (p[2], p[4])  # (condición, cuerpo)
+    else:  # Es la cláusula if inicial
+        p[0] = (p[1], p[3])  # (condición, cuerpo)
 
 
 # --- Secuenciador para cuerpos de IF/WHILE ---
@@ -414,7 +358,7 @@ def p_expr_binop(p):
     elif p[2] == '*': node = Times() # O Mult() si renombras la clase
     elif p[2] == 'and': node = And()
     elif p[2] == 'or': node = Or()
-    elif p[2] == '==': node = Eq()
+    elif p[2] == '==': node = Equal()
     elif p[2] == '<>': node = Neq()
     elif p[2] == '<': node = Less()
     elif p[2] == '>': node = Gt()

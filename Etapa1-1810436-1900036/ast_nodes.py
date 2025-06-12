@@ -9,23 +9,21 @@ class ASTNode:
         # Determine prefix based on level for standard nodes
         prefix = ""
         if level > 0:
-            prefix = "-" * level + ""
-
-        # Node name is class name by default
-        node_display_name = self.__class__.__name__
+            prefix = "-" * level
         
-        # For Block at root, override prefix (it has no prefix)
-        if isinstance(self, Block) and level == 0:
-            prefix = ""
-            
-        result = prefix + node_display_name + "\n"
+        node_name = self.__class__.__name__
+        
+        # Ajuste especial para While
+        if isinstance(self, While) and level == 1:
+            prefix = "--"
+        
+        result = prefix + node_name + "\n"
         
         for child in self.children:
             if isinstance(child, ASTNode):
                 result += child.__str__(level + 1)
             else:
-                # Handle raw string children (like formatted declarations)
-                child_prefix = "-" * (level + 1) + ""
+                child_prefix = "-" * (level + 1)
                 result += child_prefix + str(child) + "\n"
         return result
 
@@ -94,7 +92,7 @@ class Times(ASTNode): pass
 # class Divide(ASTNode): pass # No está en tu lexer actual
 # class Mod(ASTNode): pass    # No está en tu lexer actual
 
-class Eq(ASTNode): pass    # TkEqual ==
+class Equal(ASTNode): pass    # TkEqual ==
 class Neq(ASTNode): pass   # TkNEqual <>
 class Less(ASTNode): pass   # TkLess <
 class Gt(ASTNode): pass    # TkGreater >

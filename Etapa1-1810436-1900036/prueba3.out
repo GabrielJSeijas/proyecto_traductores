@@ -1,0 +1,173 @@
+Block
+-Declare
+--Sequencing
+---min, max : int
+---A : function[..Literal: 2]
+-If
+--Guard
+---Guard
+----Guard
+-----Guard
+------Guard
+-------Then
+--------And
+---------Less
+----------App
+-----------Ident: A
+-----------Literal: 0
+----------App
+-----------Ident: A
+-----------Literal: 1
+---------Less
+----------App
+-----------Ident: A
+-----------Literal: 1
+----------App
+-----------Ident: A
+-----------Literal: 2
+--------Sequencing
+---------Asig
+----------Ident: min
+----------App
+-----------Ident: A
+-----------Literal: 0
+---------Asig
+----------Ident: max
+----------App
+-----------Ident: A
+-----------Literal: 2
+-------Then
+--------And
+---------Less
+----------App
+-----------Ident: A
+-----------Literal: 0
+----------App
+-----------Ident: A
+-----------Literal: 2
+---------Less
+----------App
+-----------Ident: A
+-----------Literal: 2
+----------App
+-----------Ident: A
+-----------Literal: 1
+--------Sequencing
+---------Asig
+----------Ident: min
+----------App
+-----------Ident: A
+-----------Literal: 0
+---------Asig
+----------Ident: max
+----------App
+-----------Ident: A
+-----------Literal: 1
+------Then
+-------And
+--------Less
+---------App
+----------Ident: A
+----------Literal: 1
+---------App
+----------Ident: A
+----------Literal: 0
+--------Less
+---------App
+----------Ident: A
+----------Literal: 0
+---------App
+----------Ident: A
+----------Literal: 2
+-------Sequencing
+--------Asig
+---------Ident: min
+---------App
+----------Ident: A
+----------Literal: 1
+--------Asig
+---------Ident: max
+---------App
+----------Ident: A
+----------Literal: 2
+-----Then
+------And
+-------Less
+--------App
+---------Ident: A
+---------Literal: 1
+--------App
+---------Ident: A
+---------Literal: 2
+-------Less
+--------App
+---------Ident: A
+---------Literal: 2
+--------App
+---------Ident: A
+---------Literal: 0
+------Sequencing
+-------Asig
+--------Ident: min
+--------App
+---------Ident: A
+---------Literal: 1
+-------Asig
+--------Ident: max
+--------App
+---------Ident: A
+---------Literal: 0
+----Then
+-----And
+------Less
+-------App
+--------Ident: A
+--------Literal: 2
+-------App
+--------Ident: A
+--------Literal: 0
+------Less
+-------App
+--------Ident: A
+--------Literal: 0
+-------App
+--------Ident: A
+--------Literal: 1
+-----Sequencing
+------Asig
+-------Ident: min
+-------App
+--------Ident: A
+--------Literal: 2
+------Asig
+-------Ident: max
+-------App
+--------Ident: A
+--------Literal: 1
+---Then
+----And
+-----Less
+------App
+-------Ident: A
+-------Literal: 2
+------App
+-------Ident: A
+-------Literal: 1
+-----Less
+------App
+-------Ident: A
+-------Literal: 1
+------App
+-------Ident: A
+-------Literal: 0
+----Sequencing
+-----Asig
+------Ident: min
+------App
+-------Ident: A
+-------Literal: 2
+-----Asig
+------Ident: max
+------App
+-------Ident: A
+-------Literal: 0
