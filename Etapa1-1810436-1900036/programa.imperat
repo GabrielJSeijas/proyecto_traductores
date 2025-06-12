@@ -1,16 +1,13 @@
 {
-    int max_, _;
+    int i, max;
+    bool itIs;
     function[..5] A;
 
-    max_ := A.0;
-    _ := 1;
-    while _ <= 5  -->
-       if max_ < A._ -->
-          max_ := A._
-       [] max_ >= A._ -->
-          skip
-       fi;
-       _ := _ + 1
+    itIs := false;
+    i := 0;
+    while i <= 5 and !itIs -->
+       itIs := A.i == 10;
+       i := i+1
     end
     // Esto es un comentario. Debe ser ignorado.
-} 
+}

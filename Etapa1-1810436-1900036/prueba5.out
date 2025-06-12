@@ -27,20 +27,18 @@ Block
 ---------App
 ----------Ident: A
 ----------Ident: _
---------Sequencing
----------Asig
-----------Ident: max_
-----------App
------------Ident: A
------------Ident: _
+--------Asig
+---------Ident: max_
+---------App
+----------Ident: A
+----------Ident: _
 -------Then
 --------Geq
 ---------Ident: max_
 ---------App
 ----------Ident: A
 ----------Ident: _
---------Sequencing
----------Skip
+--------skip
 -----Asig
 ------Ident: _
 ------Plus

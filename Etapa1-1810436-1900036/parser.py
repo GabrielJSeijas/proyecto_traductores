@@ -202,7 +202,7 @@ def p_print_stmt(p):
 # --- Skip ---
 def p_skip_stmt(p):
     '''skip_stmt : TkSkip'''
-    p[0] = Skip()
+    p[0] = skip()
 
 # --- Return ---
 def p_return_stmt(p):
@@ -314,14 +314,27 @@ def p_if_guard_clause(p):
 def p_body_sequencing(p):
     '''body_sequencing : body_stmt_item
                        | body_stmt_item TkSemicolon body_sequencing'''
-    if len(p) == 2: # Un solo body_stmt_item
-        seq_node = Sequencing()
-        seq_node.add_child(p[1])
-        p[0] = seq_node
-    else: # body_stmt_item ; body_sequencing
-        # p[3] es el nodo Sequencing de la llamada recursiva
-        p[3].children.insert(0, p[1]) # Prepend el stmt actual a los hijos
-        p[0] = p[3]
+    if len(p) == 2:
+        # CASO BASE: El cuerpo es una única instrucción (body_stmt_item).
+        # Devolvemos el nodo de la instrucción directamente, sin envolverlo.
+        p[0] = p[1]
+    else:
+        # CASO RECURSIVO: Hay una secuencia de instrucciones.
+        # p[1] es la instrucción actual.
+        # p[3] es el resto del cuerpo, que puede ser una sola instrucción o ya un Sequencing.
+
+        # Verificamos si el resto ya es un nodo Sequencing.
+        if isinstance(p[3], Sequencing):
+            # Si ya es un Sequencing, simplemente añadimos la instrucción actual al principio.
+            p[3].children.insert(0, p[1])
+            p[0] = p[3]
+        else:
+            # Si p[3] no es un Sequencing, significa que era una sola instrucción (del caso base).
+            # Ahora necesitamos crear un Sequencing para agrupar p[1] y p[3].
+            seq_node = Sequencing()
+            seq_node.add_child(p[1]) # Añadimos la instrucción actual
+            seq_node.add_child(p[3]) # Añadimos la última instrucción
+            p[0] = seq_node
 
 # Sentencias permitidas DENTRO de un cuerpo de if/while (no declaraciones)
 def p_body_stmt_item(p):

@@ -117,5 +117,5 @@ class Then(ASTNode): pass      # Child of Guard, contains Sequencing
 class If(ASTNode): pass
 class Guard(ASTNode): pass     # Child of If
 class Print(ASTNode): pass
-class Skip(ASTNode): pass      # Not in min/max example
+class skip(ASTNode): pass      # Not in min/max example
 class Return(ASTNode): pass    # Not in min/max example
