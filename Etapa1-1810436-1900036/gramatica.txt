@@ -1,59 +1,60 @@
-S -> program
+Simbolo inicial: program
 
-program : block
+program -> block
 
-block : TkOBlock opt_stmt_list TkCBlock
+block -> TkOBlock opt_stmt_list TkCBlock
 
-opt_stmt_list : stmt_list
-              | empty
+opt_stmt_list -> stmt_list
+               | ε
 
-stmt_list : stmt_item
-          | stmt_item stmt_list
+stmt_list -> statement
+           | statement TkSemicolon stmt_list
 
-stmt_item : declaration_stmt TkSemicolon
-          | assignment_stmt TkSemicolon
-          | print_stmt TkSemicolon
-          | skip_stmt TkSemicolon
-          | return_stmt TkSemicolon
-          | if_stmt
-          | while_stmt
+statement -> declaration_stmt
+           | assignment_stmt
+           | print_stmt
+           | skip_stmt
+           | return_stmt
+           | if_stmt
+           | while_stmt
 
-declaration_stmt : TkInt declare_id_list
-                 | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
+declaration_stmt -> TkInt declare_id_list
+                  | TkBool declare_id_list
+                  | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list
 
-declare_id_list : TkId
-                | TkId TkComma declare_id_list
+declare_id_list -> TkId
+                 | TkId TkComma declare_id_list
 
-assignment_stmt : TkId TkAsig expr
+assignment_stmt -> TkId TkAsig expr
 
-print_stmt : TkPrint expr
+print_stmt -> TkPrint expr
 
-skip_stmt : TkSkip
+skip_stmt -> TkSkip
 
-return_stmt : TkReturn expr
-    
-while_stmt : TkWhile expr TkArrow body_sequencing TkEnd
+return_stmt -> TkReturn expr
 
-if_stmt : TkIf if_guards_list TkFi
+while_stmt -> TkWhile expr TkArrow body_sequencing TkEnd
 
-if_guards_list : if_guard_clause
-               | if_guard_clause if_guards_list
+if_stmt -> TkIf if_guards_list TkFi
 
-if_guard_clause : expr TkArrow body_sequencing
-                | TkGuard expr TkArrow body_sequencing
+if_guards_list -> if_guard_clause
+                | if_guard_clause if_guards_list
 
-body_sequencing : body_stmt_item
-                | body_stmt_item TkSemicolon body_sequencing
+if_guard_clause -> expr TkArrow body_sequencing
+                 | TkGuard expr TkArrow body_sequencing
 
-body_stmt_item : assignment_stmt
-               | print_stmt
-               | skip_stmt
-               | return_stmt
-               | if_stmt
-               | while_stmt
-               | block
+body_sequencing -> body_stmt_item
+                 | body_stmt_item TkSemicolon body_sequencing
 
-expr : expr TkPlus expr
+body_stmt_item -> assignment_stmt
+                | print_stmt
+                | skip_stmt
+                | return_stmt
+                | if_stmt
+                | while_stmt
+                | block
+
+expr -> expr TkPlus expr
      | expr TkMinus expr
      | expr TkMult expr
      | expr TkAnd expr
@@ -64,16 +65,21 @@ expr : expr TkPlus expr
      | expr TkGreater expr
      | expr TkLeq expr
      | expr TkGeq expr
-     | expr TkApp expr
-     | TkMinus expr %prec UMINUS
-     | TkNot expr
-     | TkOpenPar expr TkClosePar
-     | TkNum
-     | TkTrue
-     | TkFalse
-     | TkString
-     | TkId
      | expr TkComma expr
      | expr TkTwoPoints expr
-     
-empty : /* epsilon */
+     | TkMinus expr %prec UMINUS
+     | TkNot expr
+     | atom
+
+atom -> atom TkApp simple_atom
+     | simple_atom
+
+simple_atom -> TkId
+            | TkNum
+            | TkTrue
+            | TkFalse
+            | TkString
+            | atom TkOpenPar expr TkClosePar
+            | TkOpenPar expr TkClosePar
+
+empty -> ε
