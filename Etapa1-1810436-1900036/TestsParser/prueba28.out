@@ -1,0 +1,20 @@
+Block
+-Declare
+--a, b, c : int
+-Asig
+--Ident: a
+--Minus
+---Plus
+----Literal: 10
+----Minus
+-----Mult
+------Plus
+-------Ident: a
+-------Minus
+--------Ident: c
+------Mult
+-------Minus
+--------Literal: 100
+-------Literal: 2
+-----Literal: 1
+---Ident: b

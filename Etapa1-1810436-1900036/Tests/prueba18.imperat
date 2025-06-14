@@ -1,5 +1,0 @@
-{
-   int a, b;
-   bool isTrue, isFalse;
-   isTrue := true
-}

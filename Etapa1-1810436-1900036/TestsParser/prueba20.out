@@ -1,0 +1,25 @@
+Block
+-Declare
+--Sequencing
+---Sequencing
+----a : int
+----isTrue : bool
+---A, B : function[..Literal: 3]
+-Asig
+--Ident: a
+--Plus
+---App
+----Ident: A
+----Literal: 2
+---Mult
+----Minus
+-----App
+------Ident: B
+------Literal: 1
+----App
+-----WriteFunction
+------Ident: A
+------TwoPoints
+-------Literal: 2
+-------Literal: 3
+-----Literal: 2

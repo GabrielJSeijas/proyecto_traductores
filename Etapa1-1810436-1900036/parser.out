@@ -2394,8 +2394,18 @@ state 66
     (70) expr -> expr . TkComma expr
     (71) expr -> expr . TkTwoPoints expr
 
+    TkPlus          reduce using rule 52 (expr -> TkNot expr .)
+    TkMinus         reduce using rule 52 (expr -> TkNot expr .)
+    TkMult          reduce using rule 52 (expr -> TkNot expr .)
     TkAnd           reduce using rule 52 (expr -> TkNot expr .)
     TkOr            reduce using rule 52 (expr -> TkNot expr .)
+    TkEqual         reduce using rule 52 (expr -> TkNot expr .)
+    TkNEqual        reduce using rule 52 (expr -> TkNot expr .)
+    TkLess          reduce using rule 52 (expr -> TkNot expr .)
+    TkGreater       reduce using rule 52 (expr -> TkNot expr .)
+    TkLeq           reduce using rule 52 (expr -> TkNot expr .)
+    TkGeq           reduce using rule 52 (expr -> TkNot expr .)
+    TkComma         reduce using rule 52 (expr -> TkNot expr .)
     TkTwoPoints     reduce using rule 52 (expr -> TkNot expr .)
     TkSemicolon     reduce using rule 52 (expr -> TkNot expr .)
     TkCBlock        reduce using rule 52 (expr -> TkNot expr .)
@@ -2411,29 +2421,19 @@ state 66
     TkEnd           reduce using rule 52 (expr -> TkNot expr .)
     TkArrow         reduce using rule 52 (expr -> TkNot expr .)
     TkClosePar      reduce using rule 52 (expr -> TkNot expr .)
-    TkPlus          shift and go to state 52
-    TkMinus         shift and go to state 53
-    TkMult          shift and go to state 54
-    TkEqual         shift and go to state 57
-    TkNEqual        shift and go to state 58
-    TkLess          shift and go to state 59
-    TkGreater       shift and go to state 60
-    TkLeq           shift and go to state 61
-    TkGeq           shift and go to state 62
-    TkComma         shift and go to state 63
 
-  ! TkPlus          [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkMinus         [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkMult          [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkEqual         [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkNEqual        [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkLess          [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkGreater       [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkLeq           [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkGeq           [ reduce using rule 52 (expr -> TkNot expr .) ]
-  ! TkComma         [ reduce using rule 52 (expr -> TkNot expr .) ]
+  ! TkPlus          [ shift and go to state 52 ]
+  ! TkMinus         [ shift and go to state 53 ]
+  ! TkMult          [ shift and go to state 54 ]
   ! TkAnd           [ shift and go to state 55 ]
   ! TkOr            [ shift and go to state 56 ]
+  ! TkEqual         [ shift and go to state 57 ]
+  ! TkNEqual        [ shift and go to state 58 ]
+  ! TkLess          [ shift and go to state 59 ]
+  ! TkGreater       [ shift and go to state 60 ]
+  ! TkLeq           [ shift and go to state 61 ]
+  ! TkGeq           [ shift and go to state 62 ]
+  ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 

@@ -1,24 +1,24 @@
 class ASTNode:
     def __init__(self):
         self.children = []
-    
+
     def add_child(self, node):
         self.children.append(node)
-    
+
     def __str__(self, level=0):
-        # Determine prefix based on level for standard nodes
+        # Prefijo para mostrar el nivel del nodo en el árbol
         prefix = ""
         if level > 0:
             prefix = "-" * level
-        
+
         node_name = self.__class__.__name__
-        
-        # Ajuste especial para While
+
+        # Prefijo especial para nodos While en el primer nivel
         if isinstance(self, While) and level == 1:
             prefix = "--"
-        
+
         result = prefix + node_name + "\n"
-        
+
         for child in self.children:
             if isinstance(child, ASTNode):
                 result += child.__str__(level + 1)
@@ -31,15 +31,16 @@ class Block(ASTNode):
     pass
 
 class Declare(ASTNode): pass
-class Sequencing(ASTNode): pass # Will contain formatted strings or other ASTNodes
-class Asig(ASTNode): pass
+class Sequencing(ASTNode): pass # Secuencia de instrucciones o expresiones
+class Asig(ASTNode): pass # Asignación
 
 class Ident(ASTNode):
     def __init__(self, name):
         super().__init__()
         self.name = name
-    
+
     def __str__(self, level=0):
+        # Representa un identificador (nombre de variable)
         prefix = ""
         if level > 0: prefix = "-" * level + ""
         return prefix + f"Ident: {self.name}\n"
@@ -47,18 +48,18 @@ class Ident(ASTNode):
 class Literal(ASTNode):
     def __init__(self, value):
         super().__init__()
-        # Store booleans as Python booleans for consistency if needed later
+        # Convierte cadenas 'true'/'false' a booleanos de Python
         if isinstance(value, str) and value.lower() == 'true':
             self.value = True
         elif isinstance(value, str) and value.lower() == 'false':
             self.value = False
         else:
-            self.value = value # Could be int or bool
-    
+            self.value = value
+
     def __str__(self, level=0):
+        # Representa un valor literal (entero o booleano)
         prefix = ""
         if level > 0: prefix = "-" * level + ""
-        # Python's bool.__str__() is 'True' or 'False', problem wants 'true', 'false'
         val_to_print = self.value
         if isinstance(self.value, bool):
             val_to_print = str(self.value).lower()
@@ -67,45 +68,43 @@ class Literal(ASTNode):
 class String(ASTNode):
     def __init__(self, value):
         super().__init__()
-        self.value = value # Value should already be processed by lexer
-    
+        self.value = value
+
     def __str__(self, level=0):
+        # Representa un literal de cadena
         prefix = ""
         if level > 0: prefix = "-" * level + ""
         return prefix + f"String: \"{self.value}\"\n"
 
-# Binary and Unary Operations
-class Plus(ASTNode): pass
-class Minus(ASTNode): pass # Can be unary or binary
-class Mult(ASTNode): pass
+# Operaciones binarias y unarias
+class Plus(ASTNode): pass # Suma
+class Minus(ASTNode): pass # Resta (puede ser unaria o binaria)
+class Mult(ASTNode): pass # Multiplicación
 
-# class Divide(ASTNode): pass # No está en tu lexer actual
-# class Mod(ASTNode): pass    # No está en tu lexer actual
+class Equal(ASTNode): pass    # Igualdad (==)
+class NotEqual(ASTNode): pass   # Diferente (<>)
+class Less(ASTNode): pass   # Menor que (<)
+class Greater(ASTNode): pass    # Mayor que (>)
+class Leq(ASTNode): pass   # Menor o igual (<=)
+class Geq(ASTNode): pass   # Mayor o igual (>=)
 
-class Equal(ASTNode): pass    # TkEqual ==
-class Neq(ASTNode): pass   # TkNEqual <>
-class Less(ASTNode): pass   # TkLess <
-class Gt(ASTNode): pass    # TkGreater >
-class Leq(ASTNode): pass   # TkLeq <=
-class Geq(ASTNode): pass   # TkGeq >=
+class And(ASTNode): pass # Operador lógico AND
+class Or(ASTNode): pass  # Operador lógico OR
+class Not(ASTNode): pass # Operador lógico NOT
 
-class And(ASTNode): pass
-class Or(ASTNode): pass
-class Not(ASTNode): pass
+# Estructuras de expresión
+class Comma(ASTNode): pass       # Separador de expresiones con coma
+class TwoPoints(ASTNode): pass  # Separador de expresiones con dos puntos (rango)
+class App(ASTNode): pass         # Aplicación de función o acceso a miembro
 
-# Expression structure
-class Comma(ASTNode): pass       # For 'expr, expr' (e.g. list literals, not in min/max example)
-class TwoPoints(ASTNode): pass  # For 'expr : expr' (ranges, not in min/max example)
-class App(ASTNode): pass         # For 'expr . expr' (like A.0)
-
-# Special function handling (not used in min/max example's AST, but in general desc)
+# Función especial de escritura
 class WriteFunction(ASTNode): pass
 
-# Statements
-class While(ASTNode): pass
-class Then(ASTNode): pass      # Child of Guard, contains Sequencing
-class If(ASTNode): pass
-class Guard(ASTNode): pass     # Child of If
-class Print(ASTNode): pass
-class skip(ASTNode): pass      # Not in min/max example
-class Return(ASTNode): pass    # Not in min/max example
+# Sentencias
+class While(ASTNode): pass # Bucle while
+class Then(ASTNode): pass      # Parte 'then' de un guardia, contiene secuencia
+class If(ASTNode): pass # Sentencia if
+class Guard(ASTNode): pass     # Guarda de un if
+class Print(ASTNode): pass # Sentencia de impresión
+class skip(ASTNode): pass      # Sentencia de salto (no hace nada)
+class Return(ASTNode): pass    # Sentencia de retorno

@@ -1,0 +1,8 @@
+Block
+-Declare
+--Sequencing
+---a, b : int
+---isTrue, isFalse : bool
+-Asig
+--Ident: isTrue
+--Literal: true

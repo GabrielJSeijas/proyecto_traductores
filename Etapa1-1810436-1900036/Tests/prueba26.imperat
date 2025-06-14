@@ -1,5 +1,0 @@
-{
-    bool a, b;
-    int c;
-    a := true or b or c==4 and false and false or a
-}

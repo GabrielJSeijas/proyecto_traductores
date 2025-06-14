@@ -1,0 +1,20 @@
+Block
+-Declare
+--Sequencing
+---a, b : bool
+---c : int
+-Asig
+--Ident: a
+--And
+---And
+----Or
+-----Literal: true
+-----Or
+------Ident: b
+------Equal
+-------Ident: c
+-------Literal: 4
+----Literal: false
+---Or
+----Literal: false
+----Ident: a

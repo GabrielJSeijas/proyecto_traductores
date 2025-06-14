@@ -1,0 +1,10 @@
+Block
+-Declare
+--Sequencing
+---Sequencing
+----a : int
+----isTrue : bool
+---A, B : function[..Literal: 3]
+-Asig
+--Ident: a
+--Literal: 0

@@ -1,0 +1,46 @@
+Block
+-Declare
+--Sequencing
+---max_, _ : int
+---A : function[..Literal: 5]
+-Sequencing
+--Sequencing
+---Asig
+----Ident: max_
+----App
+-----Ident: A
+-----Literal: 0
+---Asig
+----Ident: _
+----Literal: 1
+--While
+---Then
+----Leq
+-----Ident: _
+-----Literal: 5
+----Sequencing
+-----If
+------Guard
+-------Then
+--------Less
+---------Ident: max_
+---------App
+----------Ident: A
+----------Ident: _
+--------Asig
+---------Ident: max_
+---------App
+----------Ident: A
+----------Ident: _
+-------Then
+--------Geq
+---------Ident: max_
+---------App
+----------Ident: A
+----------Ident: _
+--------skip
+-----Asig
+------Ident: _
+------Plus
+-------Ident: _
+-------Literal: 1
