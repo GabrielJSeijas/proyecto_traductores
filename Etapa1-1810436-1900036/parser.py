@@ -4,19 +4,18 @@ from lexer import tokens
 from ast_nodes import *
 import sys
 
-# Precedencia de operadores (tuya es un buen punto de partida)
+ # ---------- PRECEDENCIA ----------
 precedence = (
     ('left', 'TkOr'),
     ('left', 'TkAnd'),
-    ('right', 'TkNot'),
-    ('nonassoc', 'TkLess', 'TkGreater', 'TkLeq', 'TkGeq', 'TkEqual', 'TkNEqual'), # Comparison
-    ('left', 'TkComma'), # Comma
-    ('left', 'TkPlus', 'TkMinus'),
-    ('left', 'TkMult'), # Times
-    # ('left', 'TkDiv', 'TkMod'), # Si los añades
-    ('right', 'UMINUS'), # Unary minus
-    ('left', 'TkApp'), # Para A.0, A.1 etc. darle alta precedencia
+    ('right','TkNot'),
+    ('nonassoc','TkLess','TkGreater','TkLeq','TkGeq','TkEqual','TkNEqual'),
+    ('left','TkComma'),
+    ('left','TkPlus','TkMinus'),
+    ('left','TkMult'),
+    ('right','UMINUS'),
 )
+
 
 # --- Programa y Bloque Principal ---
 def p_program(p):
@@ -313,8 +312,60 @@ def p_body_stmt_item(p):
     p[0] = p[1]
 
 
+# --- Postfijos: punto y llamada ---
+def p_atom_app(p):
+    'atom : atom TkApp simple_atom'
+    node = App()
+    node.add_child(p[1])
+    node.add_child(p[3])
+    p[0] = node
+
+def p_atom_simple(p):  
+    'atom : simple_atom'
+    p[0] = p[1]
+
+def p_simple_atom_call(p):
+    'simple_atom : atom TkOpenPar expr TkClosePar'
+    node = WriteFunction()
+    node.add_child(p[1])
+    node.add_child(p[3])
+    p[0] = node
+
+def p_simple_atom_group(p):  # (IGUAL) paréntesis
+    'simple_atom : TkOpenPar expr TkClosePar'
+    p[0] = p[2]
+
+def p_simple_atom_id(p):  # (IGUAL) identificador
+    'simple_atom : TkId'
+    p[0] = Ident(p[1])
+
+def p_simple_atom_num(p):  # (IGUAL) número
+    'simple_atom : TkNum'
+    p[0] = Literal(p[1])
+
+def p_simple_atom_true_false(p):  # (IGUAL) booleano
+    '''simple_atom : TkTrue
+                   | TkFalse'''
+    p[0] = Literal(p[1] == 'true')
+
+def p_simple_atom_string(p):  # (IGUAL) string
+    'simple_atom : TkString'
+    p[0] = String(p[1])
+
+def p_expr_uminus(p):  # (NO MOVER) - unario siempre igual
+    'expr : TkMinus expr %prec UMINUS'
+    node = Minus()
+    node.add_child(p[2])
+    p[0] = node
+
+def p_expr_not(p):  # (NO MOVER)
+    'expr : TkNot expr'
+    node = Not()
+    node.add_child(p[2])
+    p[0] = node
+
 # --- Expresiones ---
-def p_expr_binop(p):
+def p_expr_binop(p):  # (NO MOVER) 
     '''expr : expr TkPlus expr
             | expr TkMinus expr
             | expr TkMult expr
@@ -325,11 +376,10 @@ def p_expr_binop(p):
             | expr TkLess expr
             | expr TkGreater expr
             | expr TkLeq expr
-            | expr TkGeq expr
-            | expr TkApp expr''' # Para A.0
+            | expr TkGeq expr'''
     if p[2] == '+': node = Plus()
     elif p[2] == '-': node = Minus()
-    elif p[2] == '*': node = Mult() # O Mult() si renombras la clase
+    elif p[2] == '*': node = Mult()
     elif p[2] == 'and': node = And()
     elif p[2] == 'or': node = Or()
     elif p[2] == '==': node = Equal()
@@ -338,38 +388,15 @@ def p_expr_binop(p):
     elif p[2] == '>': node = Gt()
     elif p[2] == '<=': node = Leq()
     elif p[2] == '>=': node = Geq()
-    elif p[2] == '.': node = App() # A.0
     else:
-        # Esto no debería ocurrir si la gramática es correcta
         raise ValueError(f"Operador binario desconocido: {p[2]}")
-        
     node.add_child(p[1])
     node.add_child(p[3])
     p[0] = node
 
-def p_expr_uminus(p):
-    '''expr : TkMinus expr %prec UMINUS'''
-    node = Minus() # Podrías tener UnaryMinus() si quieres distinguir
-    # Para el ejemplo dado, Minus con un solo hijo funciona.
-    node.add_child(p[2])
-    p[0] = node
-
-def p_expr_write_function(p):
-    '''expr : expr TkOpenPar expr TkClosePar'''
-    node = WriteFunction()
-    node.add_child(p[1]) # La expresión que se "llama"
-    node.add_child(p[3]) # Los argumentos
-    p[0] = node
-
-def p_expr_not(p):
-    '''expr : TkNot expr'''
-    node = Not()
-    node.add_child(p[2])
-    p[0] = node
-
-def p_expr_group(p):
-    '''expr : TkOpenPar expr TkClosePar'''
-    p[0] = p[2] # Devuelve la expresión interna
+def p_expr_atom(p): 
+    'expr : atom'
+    p[0] = p[1]
 
 def p_expr_literal_num(p):
     '''expr : TkNum'''
