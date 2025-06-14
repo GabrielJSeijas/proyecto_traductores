@@ -28,17 +28,7 @@ class ASTNode:
         return result
 
 class Block(ASTNode):
-    # Override __str__ specifically for Block if it's the root
-    def __str__(self, level=0):
-        # Root Block node name has no prefix. Children are at level+1.
-        result = self.__class__.__name__ + "\n"
-        for child in self.children:
-            if isinstance(child, ASTNode):
-                result += child.__str__(level + 1) # Children start at level 1
-            else:
-                child_prefix = "-" * (level + 1) + "" # Should be at least level 1
-                result += child_prefix + str(child) + "\n"
-        return result
+    pass
 
 class Declare(ASTNode): pass
 class Sequencing(ASTNode): pass # Will contain formatted strings or other ASTNodes
@@ -87,8 +77,8 @@ class String(ASTNode):
 # Binary and Unary Operations
 class Plus(ASTNode): pass
 class Minus(ASTNode): pass # Can be unary or binary
-class Times(ASTNode): pass
-# TkMult es '*', tu clase se llama Times, podría ser Mult para consistencia.
+class Mult(ASTNode): pass
+
 # class Divide(ASTNode): pass # No está en tu lexer actual
 # class Mod(ASTNode): pass    # No está en tu lexer actual
 

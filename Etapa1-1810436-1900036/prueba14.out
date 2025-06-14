@@ -1,0 +1,190 @@
+Block
+-Declare
+--Sequencing
+---a, b, i : int
+---x, y : function[..Literal: 3]
+-Sequencing
+--Sequencing
+---Sequencing
+----Sequencing
+-----Sequencing
+------Sequencing
+-------Sequencing
+--------Sequencing
+---------Sequencing
+----------Sequencing
+-----------Sequencing
+------------Sequencing
+-------------Asig
+--------------Ident: a
+--------------Minus
+---------------Literal: 1
+-------------Asig
+--------------Ident: b
+--------------Literal: 4
+------------Asig
+-------------Ident: x
+-------------WriteFunction
+--------------WriteFunction
+---------------Ident: x
+---------------TwoPoints
+----------------Literal: 0
+----------------Ident: a
+--------------TwoPoints
+---------------Literal: 1
+---------------Ident: b
+-----------Asig
+------------Ident: i
+------------Ident: a
+----------While
+-----------Then
+------------Leq
+-------------Ident: i
+-------------Minus
+--------------Ident: b
+--------------Ident: a
+------------Sequencing
+-------------Print
+--------------Plus
+---------------String: "Variable \"i\" es igual a: "
+---------------Ident: i
+-------------Asig
+--------------Ident: i
+--------------Plus
+---------------Ident: i
+---------------Literal: 1
+---------Asig
+----------Ident: y
+----------Comma
+-----------Comma
+------------Comma
+-------------Literal: 1
+-------------Minus
+--------------Literal: 1
+------------Literal: 2
+-----------Minus
+------------Literal: 2
+--------Asig
+---------Ident: i
+---------Literal: 0
+-------While
+--------Then
+---------Leq
+----------Ident: i
+----------Literal: 3
+---------Sequencing
+----------Print
+-----------Plus
+------------Plus
+-------------Plus
+--------------Ident: i
+--------------String: ":"
+-------------App
+--------------Ident: y
+--------------Ident: i
+------------String: " "
+----------Asig
+-----------Ident: i
+-----------Plus
+------------Ident: i
+------------Literal: 1
+------Asig
+-------Ident: a
+-------Plus
+--------Literal: 3
+--------Ident: b
+-----Asig
+------Ident: b
+------Minus
+-------Literal: 4
+----If
+-----Guard
+------Guard
+-------Then
+--------And
+---------And
+----------Leq
+-----------Literal: 2
+-----------Ident: b
+----------Leq
+-----------Ident: b
+-----------Literal: 5
+---------Literal: true
+--------Print
+---------Ident: b
+-------Then
+--------And
+---------Less
+----------App
+-----------Ident: y
+-----------Literal: 2
+----------Ident: b
+---------Less
+----------Ident: b
+----------App
+-----------Ident: y
+-----------Literal: 2
+--------Print
+---------Ident: a
+------Then
+-------Or
+--------Geq
+---------App
+----------Ident: y
+----------Literal: 3
+---------Ident: b
+--------Geq
+---------Ident: b
+---------App
+----------Ident: y
+----------Literal: 3
+-------Block
+--------Declare
+---------z : function[..Literal: 1]
+--------Sequencing
+---------Sequencing
+----------Print
+-----------Plus
+------------Ident: a
+------------Ident: b
+----------Asig
+-----------Ident: z
+-----------WriteFunction
+------------WriteFunction
+-------------Ident: z
+-------------TwoPoints
+--------------Literal: 0
+--------------Ident: a
+------------TwoPoints
+-------------Literal: 1
+-------------Ident: b
+---------Print
+----------Plus
+-----------Plus
+------------Plus
+-------------Plus
+--------------String: "function["
+--------------App
+---------------Ident: z
+---------------Literal: 2
+-------------String: ".."
+------------App
+-------------Ident: z
+-------------Literal: 3
+-----------String: "]"
+---Asig
+----Ident: i
+----Literal: 3
+--While
+---Then
+----Less
+-----Ident: i
+-----Literal: 10
+----Sequencing
+-----Print
+------String: "Still here!"
+-----Asig
+------Ident: i
+------Plus
+-------Ident: i
+-------Literal: 1

@@ -1,6 +1,6 @@
 import os
 import ply.yacc as yacc
-from lexer import tokens # Asegúrate que lexer.py está accesible
+from lexer import tokens
 from ast_nodes import *
 import sys
 
@@ -15,7 +15,7 @@ precedence = (
     ('left', 'TkMult'), # Times
     # ('left', 'TkDiv', 'TkMod'), # Si los añades
     ('right', 'UMINUS'), # Unary minus
-    ('left', 'TkApp'), # Para A.0, A.1 etc. darle alta precedencia
+    ('left', 'TkApp','TkOpenPar'), # Para A.0, A.1 etc. darle alta precedencia
 )
 
 # --- Programa y Bloque Principal ---
@@ -23,46 +23,7 @@ def p_program(p):
     '''program : block'''
     p[0] = p[1]
 
-def build_sequencing_chain(stmts):
-    """
-    Construye una cadena anidada de nodos Sequencing a partir de una lista
-    de sentencias, replicando el formato del profesor.
-    Ej: [a, b, c] -> Sequencing(a, Sequencing(b, c))
-    """
-    if not stmts:
-        return None
-    if len(stmts) == 1:
-        return stmts[0]
-    
-    # El primer nodo Sequencing tiene las dos primeras sentencias
-    head = Sequencing()
-    head.add_child(stmts[0])
-    
-    # El resto se anida recursivamente
-    current = head
-    for stmt in stmts[1:-1]:
-        next_seq = Sequencing()
-        current.add_child(next_seq)
-        current = next_seq
-        current.add_child(stmt)
 
-    current.add_child(stmts[-1])
-    
-    # Corrección para el formato del profesor (anidación doble)
-    # Tu primer ejemplo muestra Sequencing(Sequencing(asig, asig)).
-    # Esta función produce Sequencing(asig, asig).
-    # Para replicar el formato exacto del profesor, lo envolvemos una vez más si hay más de una sentencia.
-    final_seq = Sequencing()
-    if len(stmts) > 1:
-        final_seq.add_child(head)
-    else:
-        final_seq.add_child(stmts[0])
-
-    # Y para replicar el doble anidamiento del ejemplo, otra vez.
-    outer_seq = Sequencing()
-    outer_seq.add_child(final_seq)
-
-    return outer_seq
 
 
 def p_block(p):
@@ -115,41 +76,21 @@ def p_block(p):
     
     # 3. Construir sentencias (esta parte ya estaba bien y no se toca)
     if statements:
-        # REGLA FINAL: Si hay UNA SOLA sentencia en todo el bloque,
-        # sin importar de qué tipo sea (If, While, Print, Asig, etc.),
-        # se añade directamente como hijo del Block.
         if len(statements) == 1:
             block_node.add_child(statements[0])
         else:
-            # Si hay MÁS DE UNA sentencia, aplicamos la lógica de anidamiento
-            # que ya distingue entre sentencias simples y de control de flujo.
-            simple_stmts = []
-            control_flow_stmts = []
-            for stmt in statements:
-                if isinstance(stmt, (If, While)):
-                    control_flow_stmts.append(stmt)
-                else: # Asig, Print, Skip, etc.
-                    simple_stmts.append(stmt)
+            # Construcción asociativa por la izquierda
+            current_chain = Sequencing()
+            current_chain.add_child(statements[0])
+            current_chain.add_child(statements[1])
             
-            # Si hay sentencias de control de flujo, usamos la estructura anidada.
-            if control_flow_stmts:
-                outer_seq = Sequencing()
-                if simple_stmts:
-                    inner_seq = Sequencing()
-                    for s in simple_stmts:
-                        inner_seq.add_child(s)
-                    outer_seq.add_child(inner_seq)
-                
-                for cf_stmt in control_flow_stmts:
-                    outer_seq.add_child(cf_stmt)
-                
-                block_node.add_child(outer_seq)
-            else:
-                # Si SOLO hay sentencias simples (pero más de una), usamos un único wrapper.
-                seq_node = Sequencing()
-                for s in simple_stmts:
-                    seq_node.add_child(s)
-                block_node.add_child(seq_node)
+            for i in range(2, len(statements)):
+                new_seq_node = Sequencing()
+                new_seq_node.add_child(current_chain)
+                new_seq_node.add_child(statements[i])
+                current_chain = new_seq_node
+            
+            block_node.add_child(current_chain)
 
     p[0] = block_node
 
@@ -392,7 +333,7 @@ def p_expr_binop(p):
             | expr TkApp expr''' # Para A.0
     if p[2] == '+': node = Plus()
     elif p[2] == '-': node = Minus()
-    elif p[2] == '*': node = Times() # O Mult() si renombras la clase
+    elif p[2] == '*': node = Mult() # O Mult() si renombras la clase
     elif p[2] == 'and': node = And()
     elif p[2] == 'or': node = Or()
     elif p[2] == '==': node = Equal()
@@ -415,6 +356,13 @@ def p_expr_uminus(p):
     node = Minus() # Podrías tener UnaryMinus() si quieres distinguir
     # Para el ejemplo dado, Minus con un solo hijo funciona.
     node.add_child(p[2])
+    p[0] = node
+
+def p_expr_write_function(p):
+    '''expr : expr TkOpenPar expr TkClosePar'''
+    node = WriteFunction()
+    node.add_child(p[1]) # La expresión que se "llama"
+    node.add_child(p[3]) # Los argumentos
     p[0] = node
 
 def p_expr_not(p):

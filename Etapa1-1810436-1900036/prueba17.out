@@ -1,0 +1,6 @@
+Block
+-Declare
+--a : int
+-Asig
+--Ident: a
+--Literal: 2

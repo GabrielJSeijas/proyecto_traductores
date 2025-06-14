@@ -1,0 +1,100 @@
+Block
+-Declare
+--Sequencing
+---Sequencing
+----a, b, c, x : int
+----d, e, f : bool
+---A : function[..Literal: 3]
+-Sequencing
+--Sequencing
+---Sequencing
+----Sequencing
+-----Sequencing
+------Sequencing
+-------Asig
+--------Ident: a
+--------Minus
+---------Plus
+----------Ident: b
+----------Mult
+-----------Literal: 2
+-----------Literal: 3
+---------Mult
+----------Minus
+-----------Literal: 3
+----------Literal: 2
+-------Asig
+--------Ident: d
+--------Literal: false
+------Asig
+-------Ident: A
+-------Leq
+--------App
+---------WriteFunction
+----------Ident: A
+----------TwoPoints
+-----------Plus
+------------Literal: 0
+------------Ident: a
+-----------Ident: b
+---------Literal: 2
+--------Not
+---------Not
+----------Ident: b
+-----Print
+------Plus
+-------Plus
+--------String: "\"hola mundo \" \n"
+--------Literal: 3
+-------App
+--------WriteFunction
+---------Ident: A
+---------TwoPoints
+----------Plus
+-----------Literal: 0
+-----------Ident: a
+----------Ident: b
+--------Literal: 2
+----While
+-----Then
+------Literal: true
+------If
+-------Guard
+--------Guard
+---------Then
+----------Literal: true
+----------Sequencing
+-----------Asig
+------------Ident: d
+------------Literal: false
+-----------Asig
+------------Ident: a
+------------Plus
+-------------Literal: 2
+-------------Literal: 3
+---------Then
+----------Literal: false
+----------Asig
+-----------Ident: a
+-----------Plus
+------------Literal: 2
+------------Literal: 3
+--------Then
+---------Literal: false
+---------Asig
+----------Ident: d
+----------Or
+-----------Literal: true
+-----------Literal: false
+---Asig
+----Ident: x
+----Literal: 2
+--While
+---Then
+----Leq
+-----Ident: x
+-----Literal: 5
+----Block
+-----Declare
+------a : int
+-----skip
