@@ -1877,6 +1877,7 @@ state 65
     TkGreater       reduce using rule 54 (expr -> TkMinus expr .)
     TkLeq           reduce using rule 54 (expr -> TkMinus expr .)
     TkGeq           reduce using rule 54 (expr -> TkMinus expr .)
+    TkOpenPar       reduce using rule 54 (expr -> TkMinus expr .)
     TkComma         reduce using rule 54 (expr -> TkMinus expr .)
     TkTwoPoints     reduce using rule 54 (expr -> TkMinus expr .)
     TkSemicolon     reduce using rule 54 (expr -> TkMinus expr .)
@@ -1893,10 +1894,8 @@ state 65
     TkArrow         reduce using rule 54 (expr -> TkMinus expr .)
     TkClosePar      reduce using rule 54 (expr -> TkMinus expr .)
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
 
   ! TkApp           [ reduce using rule 54 (expr -> TkMinus expr .) ]
-  ! TkOpenPar       [ reduce using rule 54 (expr -> TkMinus expr .) ]
   ! TkPlus          [ shift and go to state 50 ]
   ! TkMinus         [ shift and go to state 51 ]
   ! TkMult          [ shift and go to state 52 ]
@@ -1908,6 +1907,7 @@ state 65
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
@@ -1970,6 +1970,7 @@ state 67
 
     TkAnd           reduce using rule 56 (expr -> TkNot expr .)
     TkOr            reduce using rule 56 (expr -> TkNot expr .)
+    TkOpenPar       reduce using rule 56 (expr -> TkNot expr .)
     TkTwoPoints     reduce using rule 56 (expr -> TkNot expr .)
     TkSemicolon     reduce using rule 56 (expr -> TkNot expr .)
     TkCBlock        reduce using rule 56 (expr -> TkNot expr .)
@@ -1994,7 +1995,6 @@ state 67
     TkLeq           shift and go to state 59
     TkGeq           shift and go to state 60
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 56 (expr -> TkNot expr .) ]
@@ -2007,10 +2007,10 @@ state 67
   ! TkLeq           [ reduce using rule 56 (expr -> TkNot expr .) ]
   ! TkGeq           [ reduce using rule 56 (expr -> TkNot expr .) ]
   ! TkApp           [ reduce using rule 56 (expr -> TkNot expr .) ]
-  ! TkOpenPar       [ reduce using rule 56 (expr -> TkNot expr .) ]
   ! TkComma         [ reduce using rule 56 (expr -> TkNot expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2197,6 +2197,7 @@ state 75
     TkGreater       reduce using rule 42 (expr -> expr TkPlus expr .)
     TkLeq           reduce using rule 42 (expr -> expr TkPlus expr .)
     TkGeq           reduce using rule 42 (expr -> expr TkPlus expr .)
+    TkOpenPar       reduce using rule 42 (expr -> expr TkPlus expr .)
     TkComma         reduce using rule 42 (expr -> expr TkPlus expr .)
     TkTwoPoints     reduce using rule 42 (expr -> expr TkPlus expr .)
     TkSemicolon     reduce using rule 42 (expr -> expr TkPlus expr .)
@@ -2214,11 +2215,9 @@ state 75
     TkClosePar      reduce using rule 42 (expr -> expr TkPlus expr .)
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
 
   ! TkMult          [ reduce using rule 42 (expr -> expr TkPlus expr .) ]
   ! TkApp           [ reduce using rule 42 (expr -> expr TkPlus expr .) ]
-  ! TkOpenPar       [ reduce using rule 42 (expr -> expr TkPlus expr .) ]
   ! TkPlus          [ shift and go to state 50 ]
   ! TkMinus         [ shift and go to state 51 ]
   ! TkAnd           [ shift and go to state 53 ]
@@ -2229,6 +2228,7 @@ state 75
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
@@ -2262,6 +2262,7 @@ state 76
     TkGreater       reduce using rule 43 (expr -> expr TkMinus expr .)
     TkLeq           reduce using rule 43 (expr -> expr TkMinus expr .)
     TkGeq           reduce using rule 43 (expr -> expr TkMinus expr .)
+    TkOpenPar       reduce using rule 43 (expr -> expr TkMinus expr .)
     TkComma         reduce using rule 43 (expr -> expr TkMinus expr .)
     TkTwoPoints     reduce using rule 43 (expr -> expr TkMinus expr .)
     TkSemicolon     reduce using rule 43 (expr -> expr TkMinus expr .)
@@ -2279,11 +2280,9 @@ state 76
     TkClosePar      reduce using rule 43 (expr -> expr TkMinus expr .)
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
 
   ! TkMult          [ reduce using rule 43 (expr -> expr TkMinus expr .) ]
   ! TkApp           [ reduce using rule 43 (expr -> expr TkMinus expr .) ]
-  ! TkOpenPar       [ reduce using rule 43 (expr -> expr TkMinus expr .) ]
   ! TkPlus          [ shift and go to state 50 ]
   ! TkMinus         [ shift and go to state 51 ]
   ! TkAnd           [ shift and go to state 53 ]
@@ -2294,6 +2293,7 @@ state 76
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
@@ -2328,6 +2328,7 @@ state 77
     TkGreater       reduce using rule 44 (expr -> expr TkMult expr .)
     TkLeq           reduce using rule 44 (expr -> expr TkMult expr .)
     TkGeq           reduce using rule 44 (expr -> expr TkMult expr .)
+    TkOpenPar       reduce using rule 44 (expr -> expr TkMult expr .)
     TkComma         reduce using rule 44 (expr -> expr TkMult expr .)
     TkTwoPoints     reduce using rule 44 (expr -> expr TkMult expr .)
     TkSemicolon     reduce using rule 44 (expr -> expr TkMult expr .)
@@ -2344,10 +2345,8 @@ state 77
     TkArrow         reduce using rule 44 (expr -> expr TkMult expr .)
     TkClosePar      reduce using rule 44 (expr -> expr TkMult expr .)
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
 
   ! TkApp           [ reduce using rule 44 (expr -> expr TkMult expr .) ]
-  ! TkOpenPar       [ reduce using rule 44 (expr -> expr TkMult expr .) ]
   ! TkPlus          [ shift and go to state 50 ]
   ! TkMinus         [ shift and go to state 51 ]
   ! TkMult          [ shift and go to state 52 ]
@@ -2359,6 +2358,7 @@ state 77
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
@@ -2384,6 +2384,7 @@ state 78
 
     TkAnd           reduce using rule 45 (expr -> expr TkAnd expr .)
     TkOr            reduce using rule 45 (expr -> expr TkAnd expr .)
+    TkOpenPar       reduce using rule 45 (expr -> expr TkAnd expr .)
     TkTwoPoints     reduce using rule 45 (expr -> expr TkAnd expr .)
     TkSemicolon     reduce using rule 45 (expr -> expr TkAnd expr .)
     TkCBlock        reduce using rule 45 (expr -> expr TkAnd expr .)
@@ -2408,7 +2409,6 @@ state 78
     TkLeq           shift and go to state 59
     TkGeq           shift and go to state 60
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
@@ -2421,10 +2421,10 @@ state 78
   ! TkLeq           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkGeq           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkApp           [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
-  ! TkOpenPar       [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkComma         [ reduce using rule 45 (expr -> expr TkAnd expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2448,6 +2448,7 @@ state 79
     (64) expr -> expr . TkTwoPoints expr
 
     TkOr            reduce using rule 46 (expr -> expr TkOr expr .)
+    TkOpenPar       reduce using rule 46 (expr -> expr TkOr expr .)
     TkTwoPoints     reduce using rule 46 (expr -> expr TkOr expr .)
     TkSemicolon     reduce using rule 46 (expr -> expr TkOr expr .)
     TkCBlock        reduce using rule 46 (expr -> expr TkOr expr .)
@@ -2473,7 +2474,6 @@ state 79
     TkLeq           shift and go to state 59
     TkGeq           shift and go to state 60
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 46 (expr -> expr TkOr expr .) ]
@@ -2487,9 +2487,9 @@ state 79
   ! TkLeq           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkGeq           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkApp           [ reduce using rule 46 (expr -> expr TkOr expr .) ]
-  ! TkOpenPar       [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkComma         [ reduce using rule 46 (expr -> expr TkOr expr .) ]
   ! TkOr            [ shift and go to state 54 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2520,6 +2520,7 @@ state 80
     TkGreater       reduce using rule 47 (expr -> expr TkEqual expr .)
     TkLeq           reduce using rule 47 (expr -> expr TkEqual expr .)
     TkGeq           reduce using rule 47 (expr -> expr TkEqual expr .)
+    TkOpenPar       reduce using rule 47 (expr -> expr TkEqual expr .)
     TkTwoPoints     reduce using rule 47 (expr -> expr TkEqual expr .)
     TkSemicolon     reduce using rule 47 (expr -> expr TkEqual expr .)
     TkCBlock        reduce using rule 47 (expr -> expr TkEqual expr .)
@@ -2538,14 +2539,12 @@ state 80
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkMinus         [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkMult          [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkApp           [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
-  ! TkOpenPar       [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkComma         [ reduce using rule 47 (expr -> expr TkEqual expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2555,6 +2554,7 @@ state 80
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2585,6 +2585,7 @@ state 81
     TkGreater       reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkLeq           reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkGeq           reduce using rule 48 (expr -> expr TkNEqual expr .)
+    TkOpenPar       reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkTwoPoints     reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkSemicolon     reduce using rule 48 (expr -> expr TkNEqual expr .)
     TkCBlock        reduce using rule 48 (expr -> expr TkNEqual expr .)
@@ -2603,14 +2604,12 @@ state 81
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkMinus         [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkMult          [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkApp           [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
-  ! TkOpenPar       [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkComma         [ reduce using rule 48 (expr -> expr TkNEqual expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2620,6 +2619,7 @@ state 81
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2650,6 +2650,7 @@ state 82
     TkGreater       reduce using rule 49 (expr -> expr TkLess expr .)
     TkLeq           reduce using rule 49 (expr -> expr TkLess expr .)
     TkGeq           reduce using rule 49 (expr -> expr TkLess expr .)
+    TkOpenPar       reduce using rule 49 (expr -> expr TkLess expr .)
     TkTwoPoints     reduce using rule 49 (expr -> expr TkLess expr .)
     TkSemicolon     reduce using rule 49 (expr -> expr TkLess expr .)
     TkCBlock        reduce using rule 49 (expr -> expr TkLess expr .)
@@ -2668,14 +2669,12 @@ state 82
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkMinus         [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkMult          [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkApp           [ reduce using rule 49 (expr -> expr TkLess expr .) ]
-  ! TkOpenPar       [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkComma         [ reduce using rule 49 (expr -> expr TkLess expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2685,6 +2684,7 @@ state 82
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2715,6 +2715,7 @@ state 83
     TkGreater       reduce using rule 50 (expr -> expr TkGreater expr .)
     TkLeq           reduce using rule 50 (expr -> expr TkGreater expr .)
     TkGeq           reduce using rule 50 (expr -> expr TkGreater expr .)
+    TkOpenPar       reduce using rule 50 (expr -> expr TkGreater expr .)
     TkTwoPoints     reduce using rule 50 (expr -> expr TkGreater expr .)
     TkSemicolon     reduce using rule 50 (expr -> expr TkGreater expr .)
     TkCBlock        reduce using rule 50 (expr -> expr TkGreater expr .)
@@ -2733,14 +2734,12 @@ state 83
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkMinus         [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkMult          [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkApp           [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
-  ! TkOpenPar       [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkComma         [ reduce using rule 50 (expr -> expr TkGreater expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2750,6 +2749,7 @@ state 83
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2780,6 +2780,7 @@ state 84
     TkGreater       reduce using rule 51 (expr -> expr TkLeq expr .)
     TkLeq           reduce using rule 51 (expr -> expr TkLeq expr .)
     TkGeq           reduce using rule 51 (expr -> expr TkLeq expr .)
+    TkOpenPar       reduce using rule 51 (expr -> expr TkLeq expr .)
     TkTwoPoints     reduce using rule 51 (expr -> expr TkLeq expr .)
     TkSemicolon     reduce using rule 51 (expr -> expr TkLeq expr .)
     TkCBlock        reduce using rule 51 (expr -> expr TkLeq expr .)
@@ -2798,14 +2799,12 @@ state 84
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkMinus         [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkMult          [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkApp           [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
-  ! TkOpenPar       [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkComma         [ reduce using rule 51 (expr -> expr TkLeq expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2815,6 +2814,7 @@ state 84
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -2845,6 +2845,7 @@ state 85
     TkGreater       reduce using rule 52 (expr -> expr TkGeq expr .)
     TkLeq           reduce using rule 52 (expr -> expr TkGeq expr .)
     TkGeq           reduce using rule 52 (expr -> expr TkGeq expr .)
+    TkOpenPar       reduce using rule 52 (expr -> expr TkGeq expr .)
     TkTwoPoints     reduce using rule 52 (expr -> expr TkGeq expr .)
     TkSemicolon     reduce using rule 52 (expr -> expr TkGeq expr .)
     TkCBlock        reduce using rule 52 (expr -> expr TkGeq expr .)
@@ -2863,14 +2864,12 @@ state 85
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
     TkComma         shift and go to state 63
 
   ! TkPlus          [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkMinus         [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkMult          [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkApp           [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
-  ! TkOpenPar       [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkComma         [ reduce using rule 52 (expr -> expr TkGeq expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
@@ -2880,6 +2879,7 @@ state 85
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 
 
@@ -3012,6 +3012,7 @@ state 88
     TkGreater       reduce using rule 63 (expr -> expr TkComma expr .)
     TkLeq           reduce using rule 63 (expr -> expr TkComma expr .)
     TkGeq           reduce using rule 63 (expr -> expr TkComma expr .)
+    TkOpenPar       reduce using rule 63 (expr -> expr TkComma expr .)
     TkComma         reduce using rule 63 (expr -> expr TkComma expr .)
     TkTwoPoints     reduce using rule 63 (expr -> expr TkComma expr .)
     TkSemicolon     reduce using rule 63 (expr -> expr TkComma expr .)
@@ -3031,13 +3032,11 @@ state 88
     TkMinus         shift and go to state 51
     TkMult          shift and go to state 52
     TkApp           shift and go to state 61
-    TkOpenPar       shift and go to state 62
 
   ! TkPlus          [ reduce using rule 63 (expr -> expr TkComma expr .) ]
   ! TkMinus         [ reduce using rule 63 (expr -> expr TkComma expr .) ]
   ! TkMult          [ reduce using rule 63 (expr -> expr TkComma expr .) ]
   ! TkApp           [ reduce using rule 63 (expr -> expr TkComma expr .) ]
-  ! TkOpenPar       [ reduce using rule 63 (expr -> expr TkComma expr .) ]
   ! TkAnd           [ shift and go to state 53 ]
   ! TkOr            [ shift and go to state 54 ]
   ! TkEqual         [ shift and go to state 55 ]
@@ -3046,6 +3045,7 @@ state 88
   ! TkGreater       [ shift and go to state 58 ]
   ! TkLeq           [ shift and go to state 59 ]
   ! TkGeq           [ shift and go to state 60 ]
+  ! TkOpenPar       [ shift and go to state 62 ]
   ! TkComma         [ shift and go to state 63 ]
   ! TkTwoPoints     [ shift and go to state 64 ]
 

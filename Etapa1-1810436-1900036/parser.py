@@ -15,7 +15,7 @@ precedence = (
     ('left', 'TkMult'), # Times
     # ('left', 'TkDiv', 'TkMod'), # Si los añades
     ('right', 'UMINUS'), # Unary minus
-    ('left', 'TkApp','TkOpenPar'), # Para A.0, A.1 etc. darle alta precedencia
+    ('left', 'TkApp'), # Para A.0, A.1 etc. darle alta precedencia
 )
 
 # --- Programa y Bloque Principal ---
@@ -23,16 +23,12 @@ def p_program(p):
     '''program : block'''
     p[0] = p[1]
 
-
-
-
 def p_block(p):
     '''block : TkOBlock opt_stmt_list TkCBlock'''
     block_node = Block()
-    
-    all_items = p[2] if p[2] else []
+    all_items = p[2]
 
-    # 1. Separar declaraciones de sentencias
+    # --- Separación de declaraciones y sentencias ---
     declarations = []
     statements = []
     for item in all_items:
@@ -41,59 +37,59 @@ def p_block(p):
         else:
             statements.append(item)
 
-    # 2. Construir el nodo Declare con la lógica de anidamiento condicional
+    # --- Lógica de DECLARACIONES (implementa la "Regla de Oro Final") ---
     if declarations:
         declare_node = Declare()
         
-        # --- LÓGICA CLAVE CORREGIDA ---
-        # Si solo hay UNA declaración, la añadimos directamente al nodo Declare.
+        # Caso 1: Una sola declaración en total. No se envuelve.
         if len(declarations) == 1:
             declare_node.add_child(declarations[0])
         else:
-            # Si hay MÁS de una, usamos la lógica de anidamiento completa.
+            # Caso 2: Múltiples declaraciones. Se necesita un Sequencing principal.
             seq_decl_node = Sequencing()
-
+            
             var_decls = [d for d in declarations if 'function' not in d]
             func_decls = [d for d in declarations if 'function' in d]
 
-            # Si hay más de una declaración de variable, se anidan en su propio Sequencing.
-            if len(var_decls) > 1:
+            # LA LÓGICA CONDICIONAL PRECISA:
+            # El anidamiento extra solo ocurre si hay >1 var_decls Y hay func_decls.
+            if len(var_decls) > 1 and func_decls:
+                # Caso A (int; bool; func;): Hay múltiples variables Y funciones. Anidar las variables.
                 var_seq_node = Sequencing()
                 for decl_str in var_decls:
                     var_seq_node.add_child(decl_str)
                 seq_decl_node.add_child(var_seq_node)
-            elif len(var_decls) == 1:
-                # Si solo hay una, se añade directamente.
-                seq_decl_node.add_child(var_decls[0])
-            
-            # Las declaraciones de función se añaden como hermanas.
-            for func_decl in func_decls:
-                seq_decl_node.add_child(func_decl)
+                
+                # Añadir las funciones como hermanas
+                for func_decl in func_decls:
+                    seq_decl_node.add_child(func_decl)
+            else:
+                # Caso B (Todos los demás con >1 declaración):
+                # (int; bool;) o (int; func;) o (func; func;).
+                # No se necesita anidamiento extra. Se añaden todas planas.
+                for decl_str in declarations:
+                    seq_decl_node.add_child(decl_str)
             
             declare_node.add_child(seq_decl_node)
         
         block_node.add_child(declare_node)
-    
-    # 3. Construir sentencias (esta parte ya estaba bien y no se toca)
+
+    # --- Lógica de SENTENCIAS (esta parte ya está bien y no cambia) ---
     if statements:
         if len(statements) == 1:
             block_node.add_child(statements[0])
         else:
-            # Construcción asociativa por la izquierda
             current_chain = Sequencing()
             current_chain.add_child(statements[0])
             current_chain.add_child(statements[1])
-            
             for i in range(2, len(statements)):
                 new_seq_node = Sequencing()
                 new_seq_node.add_child(current_chain)
                 new_seq_node.add_child(statements[i])
                 current_chain = new_seq_node
-            
             block_node.add_child(current_chain)
-
+            
     p[0] = block_node
-
 def p_opt_stmt_list(p):
     '''opt_stmt_list : stmt_list
                      | empty'''

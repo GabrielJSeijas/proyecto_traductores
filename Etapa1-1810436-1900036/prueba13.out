@@ -42,19 +42,19 @@ Block
 ---------Not
 ----------Ident: b
 -----Print
-------Plus
--------Plus
---------String: "\"hola mundo \" \n"
---------Literal: 3
--------App
---------WriteFunction
+------App
+-------WriteFunction
+--------Plus
+---------Plus
+----------String: "\"hola mundo \" \n"
+----------Literal: 3
 ---------Ident: A
----------TwoPoints
-----------Plus
------------Literal: 0
------------Ident: a
-----------Ident: b
---------Literal: 2
+--------TwoPoints
+---------Plus
+----------Literal: 0
+----------Ident: a
+---------Ident: b
+-------Literal: 2
 ----While
 -----Then
 ------Literal: true
