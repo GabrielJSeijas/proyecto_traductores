@@ -2,6 +2,8 @@
 import sys
 from lexer import lexer
 from parser import parser, parser_input_text
+from type_checker import TypeChecker
+from symbol_table import SymbolTable
 
 def main():
     # Verifica que se reciba exactamente un argumento (el nombre del archivo)
@@ -58,9 +60,23 @@ def main():
     # Realiza el análisis sintáctico y construye el AST
     ast = parser.parse(lexer=lexer, tracking=True)
     
-    # Si el AST se construyó correctamente, lo imprime
+    # Si el AST se construyó correctamente, realizar análisis de contexto
     if ast is not None:
-        print(str(ast).strip())
+        # Crear y ejecutar el verificador de tipos
+        type_checker = TypeChecker()
+        errors = type_checker.check_program(ast)
+        
+        if errors:
+            # Mostrar solo el primer error de contexto encontrado
+            print("Context Error:", errors[0])
+            sys.exit(1)
+        else:
+            # Imprimir resultados exitosos
+            print(str(ast).strip())
+    # Si no se pudo construir el AST, muestra un mensaje de error
+    else:
+        print("Error: No AST generated")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

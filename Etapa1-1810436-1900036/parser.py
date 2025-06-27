@@ -2,6 +2,7 @@ import os
 import ply.yacc as yacc
 from lexer import tokens
 from ast_nodes import *
+from symbol_table import SymbolTable
 import sys
 
 # Definición de la precedencia de los operadores
@@ -27,50 +28,34 @@ def p_block(p):
     block_node = Block()
     all_items = p[2]
 
-    declarations = []
-    statements = []
-    for item in all_items:
-        if isinstance(item, tuple) and item[0] == 'DECLARATION_ITEM':
-            declarations.append(item[1])
-        else:
-            statements.append(item)
-
-    # Procesa las declaraciones y las agrupa según reglas específicas
-    if declarations:
-        declare_node = Declare()
-        if len(declarations) == 1:
-            declare_node.add_child(declarations[0])
-        else:
-            seq_decl_node = Sequencing()
-            var_decls = [d for d in declarations if 'function' not in d]
-            func_decls = [d for d in declarations if 'function' in d]
-            if len(var_decls) > 1 and func_decls:
-                var_seq_node = Sequencing()
-                for decl_str in var_decls:
-                    var_seq_node.add_child(decl_str)
-                seq_decl_node.add_child(var_seq_node)
-                for func_decl in func_decls:
-                    seq_decl_node.add_child(func_decl)
-            else:
-                for decl_str in declarations:
-                    seq_decl_node.add_child(decl_str)
-            declare_node.add_child(seq_decl_node)
-        block_node.add_child(declare_node)
-
-    # Procesa las sentencias y las agrupa en secuencias si es necesario
-    if statements:
-        if len(statements) == 1:
-            block_node.add_child(statements[0])
-        else:
-            current_chain = Sequencing()
-            current_chain.add_child(statements[0])
-            current_chain.add_child(statements[1])
-            for i in range(2, len(statements)):
-                new_seq_node = Sequencing()
-                new_seq_node.add_child(current_chain)
-                new_seq_node.add_child(statements[i])
-                current_chain = new_seq_node
-            block_node.add_child(current_chain)
+    # Crear tabla de símbolos para este bloque
+    block_node.symbol_table = SymbolTable()
+    
+    # Procesar declaraciones primero
+    declarations = [item for item in all_items if isinstance(item, Declare)]
+    for decl in declarations:
+        if decl.children and isinstance(decl.children[0], str):
+            decl_str = decl.children[0]
+            if ":" in decl_str:
+                vars_part, type_part = decl_str.split(":", 1)
+                var_names = [name.strip() for name in vars_part.split(",")]
+                var_type = type_part.strip()
+                
+                for var_name in var_names:
+                    block_node.symbol_table.declare(var_name, var_type)
+    
+    # Procesar el resto de las sentencias
+    statements = [item for item in all_items if not isinstance(item, Declare)]
+    
+    # Construir la secuencia de sentencias
+    if len(statements) > 1:
+        seq_node = Sequencing()
+        for stmt in statements:
+            seq_node.add_child(stmt)
+        block_node.add_child(seq_node)
+    elif len(statements) == 1:
+        block_node.add_child(statements[0])
+    
     p[0] = block_node
 
 # Lista opcional de sentencias
@@ -104,17 +89,17 @@ def p_declaration_stmt(p):
     '''declaration_stmt : TkInt declare_id_list
                         | TkBool declare_id_list 
                         | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list'''
+    declare_node = Declare()
     if p[1] == 'int':
         decl_str = f"{p[2]} : int"
-        p[0] = ('DECLARATION_ITEM', decl_str)
     elif p[1] == 'bool':
         decl_str = f"{p[2]} : bool"
-        p[0] = ('DECLARATION_ITEM', decl_str)
     else:
         num_val = p[4]
-        literal_repr = f"Literal: {num_val}"
-        decl_str = f"{p[6]} : function[..{literal_repr}]"
-        p[0] = ('DECLARATION_ITEM', decl_str)
+        decl_str = f"{p[6]} : function[..{num_val}]"  # Formato corregido
+    
+    declare_node.add_child(decl_str)
+    p[0] = declare_node
 
 # Lista de identificadores para declaraciones
 def p_declare_id_list(p):
@@ -341,7 +326,7 @@ def p_expr_binop(p):
     elif p[2] == 'and': node = And()
     elif p[2] == 'or': node = Or()
     elif p[2] == '==': node = Equal()
-    elif p[2] == '<>': node = NotEqual()
+    elif p[2] == '!=': node = NotEqual()
     elif p[2] == '<': node = Less()
     elif p[2] == '>': node = Greater()
     elif p[2] == '<=': node = Leq()

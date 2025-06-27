@@ -1,3 +1,7 @@
+# Gramática para el Lenguaje GCL (Guarded Command Language)
+# Autores: Angel Valero 18-10436 y Gabriel Seijas 19-00036
+# Etapa 2 
+
 Simbolo inicial: program
 
 program -> block
@@ -83,3 +87,22 @@ simple_atom -> TkId
             | TkOpenPar expr TkClosePar
 
 empty -> ε
+
+
+# Características principales del Lenguaje:
+1. Símbolo inicial: 'program' (representa un bloque de código entre llaves '{}').
+2. Declaraciones: Soporta variables ('int', 'bool') y funciones ('function[..n]').
+3. Estructuras de control: 
+   - Condicionales con guardias múltiples ('if cond --> ... [] cond2 --> ... fi').
+   - Bucles ('while cond --> ... end').
+4. Expresiones: 
+   - Operadores aritméticos ('+', '-', '*'), lógicos ('and', 'or', 'not'), y comparaciones ('==', '<=', ...).
+   - Accesos a funciones/arrays ('x.2'), llamadas ('x(0:a)'), y rangos ('1:3').
+5. Manejo de bloques: Anidamiento de bloques '{...}' dentro de estructuras de control.
+
+# Notas importantes:
+- Precedencia de operadores: Definida en el parser (PLY) para evitar ambigüedades (e.g., '*' precede a '+').
+- Producciones vacías: 'ε' permite bloques o listas vacías (e.g., '}' o 'int a;').
+- Recuperación de errores: El parser detecta y reporta el primer error sintáctico con línea/columna.
+- Terminales: Tokens definidos en 'lexer.py' (e.g., 'TkIf', 'TkPlus', ...).
+- No terminales: En minúsculas (e.g., 'expr', 'block').

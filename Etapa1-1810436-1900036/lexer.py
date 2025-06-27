@@ -76,7 +76,7 @@ def t_TkEqual(t):
 
 # Definición de operador no igual
 def t_TkNEqual(t):
-    r'<>'
+    r'!='
     return t
 
 # Definición de los tokens de palabras reservadas
