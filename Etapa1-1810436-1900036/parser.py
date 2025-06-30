@@ -32,21 +32,19 @@ def p_block(p):
     
     # Construir secuencia anidada
     if len(statements) > 1:
-        # Construir desde el primero hacia atrás
-        current_seq = Sequencing()
-        current_seq.add_child(statements[0])
+        # Empezar con las dos primeras sentencias
+        sequence_tree = Sequencing()
+        sequence_tree.add_child(statements[0])
+        sequence_tree.add_child(statements[1])
+
+        # Agregar el resto de las sentencias una por una
+        for i in range(2, len(statements)):
+            new_root = Sequencing()
+            new_root.add_child(sequence_tree)
+            new_root.add_child(statements[i])
+            sequence_tree = new_root
         
-        for stmt in statements[1:-1]:
-            new_seq = Sequencing()
-            new_seq.add_child(stmt)
-            new_seq.add_child(current_seq)
-            current_seq = new_seq
-        
-        # El último statement va en el nivel más interno
-        if len(statements) > 1:
-            current_seq.add_child(statements[-1])
-        
-        block_node.add_child(current_seq)
+        block_node.add_child(sequence_tree)
     elif len(statements) == 1:
         block_node.add_child(statements[0])
     

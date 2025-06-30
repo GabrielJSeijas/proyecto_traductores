@@ -20,7 +20,7 @@ class ASTNode:
             node_name = "Comma"
         
         # Solo mostrar tipo para nodos específicos
-        show_type = not isinstance(self, (Sequencing, Asig, Comma, Guard, Then))
+        show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print))
         type_info = f" | type: {self.type}" if self.type is not None and show_type else ""
         
         result = f"{prefix}{node_name}{type_info}\n"
@@ -115,15 +115,23 @@ class If(ASTNode):
         prefix = '-' * level
         result = f"{prefix}If\n"
         
-        for guard_clause in self.children:
-            if isinstance(guard_clause, Guard):
-                # Primero la condición (Guard)
-                result += f"{prefix}-Guard\n"
-                # Luego el Then con ambos hijos (condición y cuerpo)
-                result += f"{prefix}-Then\n"
-                result += guard_clause.children[0].__str__(level + 2) # Condición
-                result += guard_clause.children[1].__str__(level + 2) # Cuerpo
-        return result
+        if not self.children:
+            return result
+
+        # Imprime un único "Guard" como contenedor
+        result += f"{prefix}-Guard\n"
+        
+        # Cada hijo del nodo If es un nodo Guard que contiene una (condición, cuerpo)
+        for guard_node in self.children:
+            # Imprime "Then" para esta cláusula
+            result += f"{prefix}--Then\n"
+            
+            # Imprime la condición y el cuerpo de la cláusula
+            condition = guard_node.children[0]
+            body = guard_node.children[1]
+            result += condition.__str__(level + 3)
+            result += body.__str__(level + 3)
+            
         return result
 
 
