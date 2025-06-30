@@ -11,9 +11,16 @@ class TypeChecker:
             self.check_node(ast_node)
         return self.errors[:1]  # Solo devolver el primer error
 
-    def add_error(self, message):
+    def add_error(self, message, node=None):
         if not self.errors:
-            self.errors.append(message)
+            # Si tenemos el nodo y su ubicación, la agregamos al mensaje
+            if node and node.lineno is not None and node.col_offset is not None:
+                # Formateamos el mensaje para que coincida con lo que quieres
+                # Ejemplo: "Variable 'g' not declared" -> "Variable 'g' not declared at line 4, column 10"
+                full_message = f"Variable not declared at line {node.lineno} and column {node.col_offset}"
+                self.errors.append(full_message)
+            else:
+                self.errors.append(message)
         return "TYPE_ERROR"
 
     def check_node(self, node):
@@ -61,7 +68,7 @@ class TypeChecker:
     
         var_type = self.current_table.lookup(ident_node.name)
         if var_type is None:
-            return self.add_error(f"Variable '{ident_node.name}' no declarada")
+              return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
     
         expr_type = self.check_node(expr_node)
     
@@ -97,7 +104,7 @@ class TypeChecker:
     def check_ident(self, node):
         var_type = self.current_table.lookup(node.name)
         if var_type is None:
-            return self.add_error(f"Variable '{node.name}' no declarada")
+            return self.add_error(f"Variable '{node.name}' not declared", node)
         node.type = var_type
         return var_type
 

@@ -3,6 +3,8 @@ class ASTNode:
         self.children = []
         self.type = None
         self.symbol_table = None
+        self.lineno = None
+        self.col_offset = None
 
     def add_child(self, node):
         self.children.append(node)
@@ -68,9 +70,17 @@ class Sequencing(ASTNode):
 
 class Asig(ASTNode): pass
 class Ident(ASTNode):
-    def __init__(self, name):
+    def __init__(self, name, lineno, col_offset):
         super().__init__()
         self.name = name
+        self.lineno = lineno
+        self.col_offset = col_offset
+    def __str__(self, level=0):
+        # La representación en string no necesita cambiar
+        prefix = '-' * level
+        node_name = f"Ident: {self.name}"
+        type_info = f" | type: {self.type}" if self.type is not None else ""
+        return f"{prefix}{node_name}{type_info}\n"
 
 class Literal(ASTNode):
     def __init__(self, value):

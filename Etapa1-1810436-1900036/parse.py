@@ -17,7 +17,7 @@ def main():
         
     try:
         with open(filename, 'r') as file:
-            data = file.read().strip()
+            data = file.read()
         
         if not data:
             print("Error: El archivo está vacío")
@@ -46,7 +46,10 @@ def main():
         errors = type_checker.check_program(ast)
         
         if errors:
-            print(f"Context Error: {errors[0]}")
+    # Si el enunciado pide el error sin prefijo:
+            print(errors[0]) 
+    # Si el prefijo "Context Error:" es correcto, mantenlo como está:
+    # print(f"Context Error: {errors[0]}")
             sys.exit(1)
         else:
             # Imprimir AST decorado

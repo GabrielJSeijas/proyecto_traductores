@@ -1,0 +1,169 @@
+Block
+-Symbols Table
+--variable: min | type: int
+--variable: max | type: int
+--variable: A | type: function[..2]
+-If
+--Guard
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+---Then
+----And | type: bool
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+-----Less | type: bool
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 1 | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int
+----Sequencing
+-----Asig
+------Ident: min | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 2 | type: int
+-----Asig
+------Ident: max | type: int
+------App | type: int
+-------Ident: A | type: function[..2]
+-------Literal: 0 | type: int

@@ -101,7 +101,11 @@ def p_declare_id_list(p):
 def p_assignment_stmt(p):
     '''assignment_stmt : TkId TkAsig expr'''
     node = Asig()
-    node.add_child(Ident(p[1]))
+    # Obtenemos la ubicación del token TkId (p[1])
+    lineno = p.lineno(1)
+    col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+    # Creamos el nodo Ident con la ubicación
+    node.add_child(Ident(p[1], lineno, col_offset))
     node.add_child(p[3])
     p[0] = node
 
@@ -253,7 +257,12 @@ def p_simple_atom(p):
                    | TkFalse
                    | TkString
                    | TkOpenPar expr TkClosePar'''
-    if p.slice[1].type == 'TkId': p[0] = Ident(p[1])
+    if p.slice[1].type == 'TkId':
+        # Obtenemos la ubicación del token TkId (p[1])
+        lineno = p.lineno(1)
+        col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+        # Creamos el nodo Ident con la ubicación
+        p[0] = Ident(p[1], lineno, col_offset)
     elif p.slice[1].type == 'TkNum': p[0] = Literal(p[1])
     elif p.slice[1].type in ['TkTrue', 'TkFalse']: p[0] = Literal(p[1])
     elif p.slice[1].type == 'TkString': p[0] = String(p[1])
@@ -270,7 +279,7 @@ def find_column(input_str, token_lexpos):
 parser_input_text = ""
 def p_error(p):
     if p:
-        col = find_column(parser_input_text, p.lexpos)
+        col = find_column(p.lexer.lexdata, p.lexpos)
         print(f"Sintax error in row {p.lineno}, column {col}: unexpected token '{p.value}'.")
     else:
         print("Syntax error at EOF.")
