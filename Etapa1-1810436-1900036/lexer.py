@@ -5,7 +5,7 @@ import ply.lex as lex
 # Definición de los tokens
 tokens = [
     'TkIf', 'TkFi', 'TkWhile', 'TkEnd', 'TkInt', 'TkFunction', 'TkPrint',
-    'TkReturn', 'TkTrue', 'TkFalse', 'TkSkip', 'TkElse', 'TkBool',
+    'TkReturn', 'TkTrue', 'TkFalse', 'TkSkip', 'TkBool',
     'TkId', 'TkNum', 'TkString',
     'TkOBlock', 'TkCBlock', 'TkSoForth', 'TkComma', 'TkOpenPar', 'TkClosePar',
     'TkAsig', 'TkSemicolon', 'TkArrow', 'TkGuard', 'TkPlus', 'TkMinus', 'TkMult',
@@ -76,7 +76,7 @@ def t_TkEqual(t):
 
 # Definición de operador no igual
 def t_TkNEqual(t):
-    r'!='
+    r'<>'
     return t
 
 # Definición de los tokens de palabras reservadas

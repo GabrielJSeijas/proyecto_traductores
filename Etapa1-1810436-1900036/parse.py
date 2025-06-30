@@ -6,76 +6,61 @@ from type_checker import TypeChecker
 from symbol_table import SymbolTable
 
 def main():
-    # Verifica que se reciba exactamente un argumento (el nombre del archivo)
     if len(sys.argv) != 2:
         print("Usage: python parse.py <filename.imperat>")
         sys.exit(1)
     
     filename = sys.argv[1]
-    # Verifica que el archivo tenga la extensión correcta
     if not filename.endswith('.imperat'):
         print("Error: El archivo debe tener extensión .imperat")
         sys.exit(1)
         
     try:
-        # Lee el contenido del archivo de entrada
         with open(filename, 'r') as file:
-            data = file.read()
-    except IOError:
-        print(f"Error: Could not open file {filename}")
-        sys.exit(1)
-    
-    # Inicializa el lexer con el contenido del archivo
-    lexer.input(data)
-    lexer.lineno = 1
-
-    # Limpia errores previos del lexer si existen
-    if hasattr(lexer, 'errors'):
-        del lexer.errors
-
-    # Realiza un análisis léxico previo para detectar errores antes de parsear
-    temp_lexer = lexer.clone()
-    temp_lexer.input(data)
-    temp_lexer.lineno = 1
-    
-    while True:
-        tok = temp_lexer.token()
-        if not tok:
-            break
-    
-    # Si hay errores léxicos, los muestra y termina la ejecución
-    if hasattr(temp_lexer, 'errors') and temp_lexer.errors:
-        for l, c, msg in sorted(set(temp_lexer.errors), key=lambda x: (x[0], x[1])):
-            print(f'Error: {msg} in row {l}, column {c}')
-        sys.exit(1)
-
-    # Si no hay errores léxicos, reinicia el lexer para el parser
-    lexer.input(data)
-    lexer.lineno = 1
-
-    # Asigna el texto de entrada al parser para manejo de errores de sintaxis
-    globals_parser = sys.modules['parser']
-    globals_parser.parser_input_text = data
-
-    # Realiza el análisis sintáctico y construye el AST
-    ast = parser.parse(lexer=lexer, tracking=True)
-    
-    # Si el AST se construyó correctamente, realizar análisis de contexto
-    if ast is not None:
-        # Crear y ejecutar el verificador de tipos
+            data = file.read().strip()
+        
+        if not data:
+            print("Error: El archivo está vacío")
+            sys.exit(1)
+        
+        # Análisis léxico
+        lexer.input(data)
+        lexer.lineno = 1
+        
+        # Verificar errores léxicos
+        if hasattr(lexer, 'errors') and lexer.errors:
+            for error in sorted(set(lexer.errors), key=lambda x: (x[0], x[1]))[:1]:
+                print(f"Lexical Error: {error[2]} in row {error[0]}, column {error[1]}")
+            sys.exit(1)
+        
+        # Análisis sintáctico
+        globals()['parser_input_text'] = data
+        ast = parser.parse(lexer=lexer)
+        
+        if ast is None:
+            print("Error: No se pudo generar el AST (posible error de sintaxis)")
+            sys.exit(1)
+        
+        # Análisis de contexto
         type_checker = TypeChecker()
         errors = type_checker.check_program(ast)
         
         if errors:
-            # Mostrar solo el primer error de contexto encontrado
-            print("Context Error:", errors[0])
+            print(f"Context Error: {errors[0]}")
             sys.exit(1)
         else:
-            # Imprimir resultados exitosos
-            print(str(ast).strip())
-    # Si no se pudo construir el AST, muestra un mensaje de error
-    else:
-        print("Error: No AST generated")
+            # Imprimir AST decorado
+            ast_output = str(ast).strip()
+            if ast_output:
+                print(ast_output)
+            else:
+                print("Warning: El AST generado está vacío")
+            
+    except FileNotFoundError:
+        print(f"Error: No se pudo abrir el archivo {filename}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error inesperado: {str(e)}")
         sys.exit(1)
 
 if __name__ == '__main__':

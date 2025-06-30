@@ -2,10 +2,8 @@ import os
 import ply.yacc as yacc
 from lexer import tokens
 from ast_nodes import *
-from symbol_table import SymbolTable
 import sys
 
-# Definición de la precedencia de los operadores
 precedence = (
     ('left', 'TkOr'),
     ('left', 'TkAnd'),
@@ -17,54 +15,48 @@ precedence = (
     ('right','TkNot'),
 )
 
-# Regla inicial: un programa es un bloque
 def p_program(p):
     '''program : block'''
     p[0] = p[1]
 
-# Un bloque puede tener declaraciones y sentencias
 def p_block(p):
     '''block : TkOBlock opt_stmt_list TkCBlock'''
     block_node = Block()
-    all_items = p[2]
-
-    # Crear tabla de símbolos para este bloque
-    block_node.symbol_table = SymbolTable()
+    all_items = p[2] if p[2] is not None else []
     
-    # Procesar declaraciones primero
     declarations = [item for item in all_items if isinstance(item, Declare)]
-    for decl in declarations:
-        if decl.children and isinstance(decl.children[0], str):
-            decl_str = decl.children[0]
-            if ":" in decl_str:
-                vars_part, type_part = decl_str.split(":", 1)
-                var_names = [name.strip() for name in vars_part.split(",")]
-                var_type = type_part.strip()
-                
-                for var_name in var_names:
-                    block_node.symbol_table.declare(var_name, var_type)
-    
-    # Procesar el resto de las sentencias
     statements = [item for item in all_items if not isinstance(item, Declare)]
+
+    for decl in declarations:
+        block_node.add_child(decl)
     
-    # Construir la secuencia de sentencias
+    # Construir secuencia anidada
     if len(statements) > 1:
-        seq_node = Sequencing()
-        for stmt in statements:
-            seq_node.add_child(stmt)
-        block_node.add_child(seq_node)
+        # Construir desde el primero hacia atrás
+        current_seq = Sequencing()
+        current_seq.add_child(statements[0])
+        
+        for stmt in statements[1:-1]:
+            new_seq = Sequencing()
+            new_seq.add_child(stmt)
+            new_seq.add_child(current_seq)
+            current_seq = new_seq
+        
+        # El último statement va en el nivel más interno
+        if len(statements) > 1:
+            current_seq.add_child(statements[-1])
+        
+        block_node.add_child(current_seq)
     elif len(statements) == 1:
         block_node.add_child(statements[0])
     
     p[0] = block_node
 
-# Lista opcional de sentencias
 def p_opt_stmt_list(p):
     '''opt_stmt_list : stmt_list
                      | empty'''
     p[0] = p[1] if p[1] else []
 
-# Lista de sentencias separadas por punto y coma
 def p_stmt_list(p):
     '''stmt_list : statement
                  | statement TkSemicolon stmt_list'''
@@ -73,7 +65,6 @@ def p_stmt_list(p):
     else:
         p[0] = [p[1]] + p[3]
 
-# Tipos de sentencias permitidas
 def p_statement(p):
     '''statement : declaration_stmt
                  | assignment_stmt
@@ -81,36 +72,34 @@ def p_statement(p):
                  | skip_stmt
                  | return_stmt
                  | if_stmt
-                 | while_stmt'''
+                 | while_stmt
+                 | block'''
     p[0] = p[1]
 
-# Declaraciones de variables y funciones
 def p_declaration_stmt(p):
     '''declaration_stmt : TkInt declare_id_list
                         | TkBool declare_id_list 
                         | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list'''
     declare_node = Declare()
     if p[1] == 'int':
-        decl_str = f"{p[2]} : int"
+        decl_str = f"{p[2]}:int"
     elif p[1] == 'bool':
-        decl_str = f"{p[2]} : bool"
+        decl_str = f"{p[2]}:bool"
     else:
         num_val = p[4]
-        decl_str = f"{p[6]} : function[..{num_val}]"  # Formato corregido
+        decl_str = f"{p[6]}:function[..{num_val}]"
     
     declare_node.add_child(decl_str)
     p[0] = declare_node
 
-# Lista de identificadores para declaraciones
 def p_declare_id_list(p):
     '''declare_id_list : TkId
                        | TkId TkComma declare_id_list'''
     if len(p) == 2:
         p[0] = p[1]
     else:
-        p[0] = f"{p[1]}, {p[3]}"
+        p[0] = f"{p[1]},{p[3]}"
 
-# Sentencia de asignación
 def p_assignment_stmt(p):
     '''assignment_stmt : TkId TkAsig expr'''
     node = Asig()
@@ -118,26 +107,22 @@ def p_assignment_stmt(p):
     node.add_child(p[3])
     p[0] = node
 
-# Sentencia de impresión
 def p_print_stmt(p):
     '''print_stmt : TkPrint expr'''
     node = Print()
     node.add_child(p[2])
     p[0] = node
 
-# Sentencia skip
 def p_skip_stmt(p):
     '''skip_stmt : TkSkip'''
     p[0] = skip()
 
-# Sentencia return
 def p_return_stmt(p):
     '''return_stmt : TkReturn expr'''
     node = Return()
     node.add_child(p[2])
     p[0] = node
 
-# Sentencia while con condición y cuerpo
 def p_while_stmt(p):
     '''while_stmt : TkWhile expr TkArrow body_sequencing TkEnd'''
     while_node = While()
@@ -147,94 +132,53 @@ def p_while_stmt(p):
     while_node.add_child(then_node)
     p[0] = while_node
 
-# Reglas para recolectar cláusulas de guardias en if
-def p_if_guards_list_collector(p):
-    '''if_guards_list_collector : if_guard_clause_tuple
-                                | if_guards_list_collector if_guard_clause_tuple'''
-    if len(p) == 2:
-        p[0] = [p[1]]
-    else:
-        p[1].append(p[2])
-        p[0] = p[1]
-
-# Tupla de condición y cuerpo para guardias de if
-def p_if_guard_clause_tuple(p):
-    '''if_guard_clause_tuple : expr TkArrow body_sequencing
-                             | TkGuard expr TkArrow body_sequencing'''
-    cond_expr = None
-    body_seq_node = None
-    if p[1] == '[]':
-        cond_expr = p[2]
-        body_seq_node = p[4]
-    else:
-        cond_expr = p[1]
-        body_seq_node = p[3]
-    p[0] = (cond_expr, body_seq_node)
-
-# Sentencia if con lista de guardias
+# --- Lógica simplificada para IF ---
 def p_if_stmt(p):
     '''if_stmt : TkIf if_guards_list TkFi'''
     if_node = If()
-    if not p[2]:
-        p[0] = if_node
-        return
-    clauses = p[2]
-    def build_nested_guards(clauses):
-        if len(clauses) == 1:
-            cond, body = clauses[0]
-            then_node = Then()
-            then_node.add_child(cond)
-            then_node.add_child(body)
-            return then_node
-        else:
-            cond, body = clauses[0]
-            then_node = Then()
-            then_node.add_child(cond)
-            then_node.add_child(body)
-            rest = build_nested_guards(clauses[1:])
-            guard = Guard()
-            guard.add_child(rest)
-            guard.add_child(then_node)
-            return guard
-    nested_structure = build_nested_guards(clauses[::-1])
-    if_node.add_child(nested_structure)
+    # p[2] es una lista de nodos Guard
+    for guard_node in p[2]:
+        if_node.add_child(guard_node)
     p[0] = if_node
 
-# Lista de guardias para if
 def p_if_guards_list(p):
     '''if_guards_list : if_guard_clause
-                     | if_guard_clause if_guards_list'''
+                     | if_guard_clause TkGuard if_guards_list'''
     if len(p) == 2:
         p[0] = [p[1]]
     else:
-        p[0] = [p[1]] + p[2]
+        p[0] = [p[1]] + p[3]
 
-# Clausula de guardia para if
 def p_if_guard_clause(p):
-    '''if_guard_clause : expr TkArrow body_sequencing
-                      | TkGuard expr TkArrow body_sequencing'''
-    if p[1] == '[]':
-        p[0] = (p[2], p[4])
-    else:
-        p[0] = (p[1], p[3])
+    '''if_guard_clause : expr TkArrow body_sequencing'''
+    guard_node = Guard()
+    guard_node.add_child(p[1]) # Condición
+    guard_node.add_child(p[3]) # Cuerpo
+    p[0] = guard_node
+# ------------------------------------
 
-# Secuencia de sentencias dentro de cuerpos de if/while
 def p_body_sequencing(p):
     '''body_sequencing : body_stmt_item
                        | body_stmt_item TkSemicolon body_sequencing'''
     if len(p) == 2:
-        p[0] = p[1]
+        # Si es un solo item, no se necesita secuenciador
+        if isinstance(p[1], (Block, Asig, Print, skip, Return, If, While)):
+            p[0] = p[1]
+        else:
+            seq_node = Sequencing()
+            seq_node.add_child(p[1])
+            p[0] = seq_node
     else:
+        # Si el lado derecho ya es una secuencia, agregar al inicio
         if isinstance(p[3], Sequencing):
             p[3].children.insert(0, p[1])
             p[0] = p[3]
-        else:
+        else: # Si no, crear una nueva secuencia
             seq_node = Sequencing()
             seq_node.add_child(p[1])
             seq_node.add_child(p[3])
             p[0] = seq_node
 
-# Sentencias permitidas dentro de un cuerpo de if/while
 def p_body_stmt_item(p):
     '''body_stmt_item : assignment_stmt
                       | print_stmt
@@ -242,72 +186,9 @@ def p_body_stmt_item(p):
                       | return_stmt
                       | if_stmt
                       | while_stmt
-                      | block
-                      '''
+                      | block'''
     p[0] = p[1]
 
-# Aplicación de función (postfijo)
-def p_atom_app(p):
-    'atom : atom TkApp simple_atom'
-    node = App()
-    node.add_child(p[1])
-    node.add_child(p[3])
-    p[0] = node
-
-# Átomo simple
-def p_atom_simple(p):  
-    'atom : simple_atom'
-    p[0] = p[1]
-
-# Llamada a función
-def p_simple_atom_call(p):
-    'simple_atom : atom TkOpenPar expr TkClosePar'
-    node = WriteFunction()
-    node.add_child(p[1])
-    node.add_child(p[3])
-    p[0] = node
-
-# Agrupación con paréntesis
-def p_simple_atom_group(p):
-    'simple_atom : TkOpenPar expr TkClosePar'
-    p[0] = p[2]
-
-# Identificador como átomo
-def p_simple_atom_id(p):
-    'simple_atom : TkId'
-    p[0] = Ident(p[1])
-
-# Número como átomo
-def p_simple_atom_num(p):
-    'simple_atom : TkNum'
-    p[0] = Literal(p[1])
-
-# Booleano como átomo
-def p_simple_atom_true_false(p):
-    '''simple_atom : TkTrue
-                   | TkFalse'''
-    p[0] = Literal(p[1] == 'true')
-
-# String como átomo
-def p_simple_atom_string(p):
-    'simple_atom : TkString'
-    p[0] = String(p[1])
-
-# Negativo unario
-def p_expr_uminus(p):
-    'expr : TkMinus expr %prec UMINUS'
-    node = Minus()
-    node.add_child(p[2])
-    p[0] = node
-
-# Negación lógica
-def p_expr_not(p):
-    'expr : TkNot expr'
-    node = Not()
-    node.add_child(p[2])
-    p[0] = node
-
-# Operadores binarios
 def p_expr_binop(p):
     '''expr : expr TkPlus expr
             | expr TkMinus expr
@@ -319,83 +200,76 @@ def p_expr_binop(p):
             | expr TkLess expr
             | expr TkGreater expr
             | expr TkLeq expr
-            | expr TkGeq expr'''
+            | expr TkGeq expr
+            | expr TkComma expr
+            | expr TkTwoPoints expr'''
     if p[2] == '+': node = Plus()
     elif p[2] == '-': node = Minus()
     elif p[2] == '*': node = Mult()
     elif p[2] == 'and': node = And()
     elif p[2] == 'or': node = Or()
     elif p[2] == '==': node = Equal()
-    elif p[2] == '!=': node = NotEqual()
+    elif p[2] == '<>': node = NotEqual()
     elif p[2] == '<': node = Less()
     elif p[2] == '>': node = Greater()
     elif p[2] == '<=': node = Leq()
     elif p[2] == '>=': node = Geq()
-    else:
-        raise ValueError(f"Operador binario desconocido: {p[2]}")
+    elif p[2] == ',': node = Comma()
+    elif p[2] == ':': node = TwoPoints()
+    else: raise ValueError(f"Operador binario desconocido: {p[2]}")
     node.add_child(p[1])
     node.add_child(p[3])
     p[0] = node
 
-# Expresión como átomo
-def p_expr_atom(p): 
-    'expr : atom'
+def p_expr_uminus(p):
+    'expr : TkMinus expr %prec UMINUS'
+    node = Minus()
+    node.add_child(p[2])
+    p[0] = node
+
+def p_expr_not(p):
+    'expr : TkNot expr'
+    node = Not()
+    node.add_child(p[2])
+    p[0] = node
+
+def p_expr_atom(p):
+    '''expr : atom'''
     p[0] = p[1]
 
-# Literal numérico como expresión
-def p_expr_literal_num(p):
-    '''expr : TkNum'''
-    p[0] = Literal(p[1])
+def p_atom(p):
+    '''atom : atom TkApp simple_atom
+            | simple_atom'''
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        node = App()
+        node.add_child(p[1])
+        node.add_child(p[3])
+        p[0] = node
 
-# Literal booleano como expresión
-def p_expr_literal_bool(p):
-    '''expr : TkTrue
-            | TkFalse'''
-    p[0] = Literal(p[1] == 'true')
+def p_simple_atom(p):
+    '''simple_atom : TkId
+                   | TkNum
+                   | TkTrue
+                   | TkFalse
+                   | TkString
+                   | TkOpenPar expr TkClosePar'''
+    if p.slice[1].type == 'TkId': p[0] = Ident(p[1])
+    elif p.slice[1].type == 'TkNum': p[0] = Literal(p[1])
+    elif p.slice[1].type in ['TkTrue', 'TkFalse']: p[0] = Literal(p[1])
+    elif p.slice[1].type == 'TkString': p[0] = String(p[1])
+    elif p.slice[1].type == 'TkOpenPar': p[0] = p[2]
 
-# String como expresión
-def p_expr_string(p):
-    '''expr : TkString'''
-    p[0] = String(p[1])
-
-# Identificador como expresión
-def p_expr_ident(p):
-    '''expr : TkId'''
-    p[0] = Ident(p[1])
-
-# Expresión separada por coma
-def p_expr_comma(p):
-    '''expr : expr TkComma expr'''
-    node = Comma()
-    node.add_child(p[1])
-    node.add_child(p[3])
-    p[0] = node
-
-# Expresión de rango (dos puntos)
-def p_expr_twopoints(p):
-    '''expr : expr TkTwoPoints expr'''
-    node = TwoPoints()
-    node.add_child(p[1])
-    node.add_child(p[3])
-    p[0] = node
-
-# Regla para vacío (listas opcionales)
 def p_empty(p):
     '''empty :'''
     p[0] = None
 
-# Función para encontrar la columna de un token
 def find_column(input_str, token_lexpos):
     last_cr = input_str.rfind('\n', 0, token_lexpos)
-    if last_cr < 0:
-        last_cr = -1
-    column = (token_lexpos - last_cr)
-    return column
+    return (token_lexpos - last_cr) if last_cr >= 0 else token_lexpos + 1
 
-# Variable global para almacenar el texto de entrada
 parser_input_text = ""
-
-# Manejo de errores de sintaxis
 def p_error(p):
     if p:
         col = find_column(parser_input_text, p.lexpos)
@@ -404,35 +278,5 @@ def p_error(p):
         print("Syntax error at EOF.")
     sys.exit(1)
 
-# Construcción del parser y redirección temporal de stderr
-old_stderr = sys.stderr
-sys.stderr = open(os.devnull, 'w')
-parser = yacc.yacc()
-sys.stderr.close()
-sys.stderr = old_stderr
-
-# Función principal para ejecutar el parser desde línea de comandos
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        file_path = sys.argv[1]
-        try:
-            with open(file_path, 'r') as f:
-                data = f.read()
-            parser_input_text = data
-            from lexer import lexer 
-            lexer.input(data)
-            if hasattr(lexer, 'errors') and lexer.errors:
-                 for l, c, msg in sorted(set(lexer.errors), key=lambda x: (x[0], x[1])):
-                    print(f'Lexical Error: {msg} in row {l}, column {c}')
-                 sys.exit(1)
-            lexer.input(data) 
-            lexer.lineno = 1
-            ast_result = parser.parse(lexer=lexer)
-            if ast_result:
-                print(ast_result)
-        except FileNotFoundError:
-            print(f"Error: File not found '{file_path}'")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-    else:
-        print("Usage: python parser.py <source_file.imperat>")
+# Construcción del parser
+parser = yacc.yacc(debug=False, write_tables=False)
