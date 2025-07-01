@@ -28,6 +28,10 @@ class TypeChecker:
         class_name = type(node).__name__
         if class_name == "ReadFunction":
             method_name = "check_readfunction"
+        elif class_name == "WriteFunction":
+            method_name = "check_writefunction"
+        elif class_name == "App":  
+            method_name = "check_app"
         else:
             method_name = f'check_{class_name.lower()}'
             
@@ -68,6 +72,33 @@ class TypeChecker:
             if not self.current_table.declare(var_name, var_type):
                 self.add_error(f"Redeclaración de variable '{var_name}' en el mismo ámbito")
 
+    def _transform_app_to_writefunction(self, node):
+        """Recorre un subárbol y cambia todos los nodos App por WriteFunction."""
+        if isinstance(node, App):
+            node.__class__ = WriteFunction
+        
+        for child in node.children:
+            self._transform_app_to_writefunction(child)
+    
+
+    def check_writefunction(self, node):
+        # La lógica es idéntica a la de check_app
+        func_node = node.children[0]
+        arg_node = node.children[1]
+
+        func_type = self.check_node(func_node)
+
+        if func_type == "TYPE_ERROR":
+            return "TYPE_ERROR"
+
+        if not (isinstance(func_type, str) and "function" in func_type):
+            return self.add_error(f"Intento de llamar a un tipo no función ({func_type})", func_node)
+    
+        self.check_node(arg_node)
+    
+        node.type = func_type
+        return func_type
+    
     def check_asig(self, node):
         ident_node = node.children[0]
         expr_node = node.children[1]
@@ -76,30 +107,37 @@ class TypeChecker:
         if var_type is None:
             return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
 
+
+        if "function" in var_type:
+            self._transform_app_to_writefunction(expr_node)
+        
+
         expr_type = self.check_node(expr_node)
 
         if expr_type == "TYPE_ERROR":
             return "TYPE_ERROR"
 
-        # Comprobación especial para asignación de funciones
+
+        if isinstance(expr_node, WriteFunction):
+             expr_type = self.check_node(expr_node) # Re-chequear para asignar tipo
+        
         is_var_func = var_type.startswith("function[..")
         is_expr_func = isinstance(expr_type, str) and expr_type.startswith("function with length=")
 
         if is_var_func and is_expr_func:
-            # Extraer el tamaño máximo de la declaración de la variable
             match_var = re.search(r'\[\.\.(\d+)\]', var_type)
             var_max_size = int(match_var.group(1)) if match_var else -1
             
-            # Extraer la longitud de la expresión
             match_expr = re.search(r'length=(\d+)', expr_type)
             expr_len = int(match_expr.group(1)) if match_expr else -1
+            
+            # (Lógica de asignación de función)
 
-            # if expr_len > var_max_size:
-            #      return self.add_error(f"Intento de asignar una función de longitud {expr_len} a la variable '{ident_node.name}' que tiene un tamaño máximo de {var_max_size}")
-        
-        # Comprobación de tipos normal para otros casos
+        # AQUÍ ESTÁ EL CAMBIO MÁS IMPORTANTE
         elif var_type != expr_type:
-            return self.add_error(f"Tipo incompatible en asignación. Variable '{ident_node.name}' es de tipo {var_type} pero se le asigna {expr_type}")
+            # Generamos el mensaje de error exacto que necesitas.
+            error_message = f"Type error. Variable {ident_node.name} has different type than expression at line {ident_node.lineno} and column {ident_node.col_offset}"
+            return self.add_error(error_message) # No es necesario pasar el nodo porque el mensaje ya está formateado.
 
         ident_node.type = var_type
         node.type = var_type
@@ -115,6 +153,15 @@ class TypeChecker:
         self.check_node(node.children[0])
         self.check_node(node.children[1])
         node.type = "function with length=2"
+        return node.type
+    
+    def check_twopoints(self, node):
+        # Este método es análogo a check_comma.
+        # Asume que ':' combina dos elementos en una "función" de longitud 2.
+        self.check_node(node.children[0])
+        self.check_node(node.children[1])
+        # Esto podría necesitar una lógica más compleja si anidas ':', pero para A(expr:expr) es suficiente.
+        node.type = "function with length=2" 
         return node.type
 
     def check_ident(self, node):
@@ -276,10 +323,63 @@ class TypeChecker:
         node.type = "int" # La aplicación de función siempre retorna int en este lenguaje
         return "int"
 
+    def check_app(self, node):
+        func_node = node.children[0]
+        arg_node = node.children[1]
+
+    # Verificamos primero el nodo de la función.
+        func_type = self.check_node(func_node)
+
+    # Si la función no está declarada, propagamos el error.
+        if func_type == "TYPE_ERROR":
+            return "TYPE_ERROR"
+
+    # Verificamos que la variable sea realmente una función.
+        if not (isinstance(func_type, str) and "function" in func_type):
+            return self.add_error(f"Intento de llamar a un tipo no función ({func_type})", func_node)
+    
+    # Verificamos los argumentos.
+        self.check_node(arg_node)
+    
+    # --- LA CORRECCIÓN CLAVE ---
+    # El tipo del nodo App no es 'int', es el tipo de la función misma.
+    # Esto permite que operaciones encadenadas como f(...).i funcionen.
+        node.type = func_type
+        return func_type
+    
+    def _transform_plus_to_concat_in_print(self, node):
+        """
+        Recorre un subárbol (post-orden) y transforma los nodos 'Plus'
+        con hijos 'int' en 'Concat'.
+        """
+        for child in node.children:
+            self._transform_plus_to_concat_in_print(child)
+        
+        if isinstance(node, Plus):
+            # Los hijos ya han sido procesados y tienen su tipo asignado
+            left_type = node.children[0].type
+            right_type = node.children[1].type
+            
+            if left_type == 'int' and right_type == 'int':
+                node.__class__ = Concat
+                node.type = "String"
+
     def check_print(self, node):
-        expr_type = self.check_node(node.children[0])
-        node.type = expr_type
-        return expr_type
+        expr_node = node.children[0]
+
+        # 1. Chequeamos los tipos de la expresión normalmente.
+        #    Esto decora todo el subárbol con sus tipos (p.ej. Plus -> int)
+        expr_type = self.check_node(expr_node)
+        if expr_type == "TYPE_ERROR":
+            return expr_type # Propagar el error
+
+        # 2. Aplicamos la regla especial de transformación para 'print'.
+        self._transform_plus_to_concat_in_print(expr_node)
+
+        # 3. El tipo del nodo 'print' es el tipo final de la expresión.
+        #    Si hubo una transformación, el tipo de expr_node ahora es String.
+        node.type = expr_node.type
+        return node.type
 
     def check_skip(self, node):
         return None

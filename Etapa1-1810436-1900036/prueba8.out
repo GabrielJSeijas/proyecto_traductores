@@ -1,0 +1,6 @@
+Block
+-Symbols Table
+-Print
+--Concat | type: String
+---String: "Hola mundo. \n"
+---String: "Esto es un slash \\"

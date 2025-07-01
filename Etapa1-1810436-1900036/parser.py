@@ -1,18 +1,22 @@
+
+
 import os
 import ply.yacc as yacc
 from lexer import tokens
 from ast_nodes import *
 import sys
 
+
 precedence = (
     ('left', 'TkOr'),
     ('left', 'TkAnd'),
     ('nonassoc','TkLess','TkGreater','TkLeq','TkGeq','TkEqual','TkNEqual'),
-    ('left','TkComma'),
+    ('left','TkComma','TkTwoPoints'),
     ('left','TkPlus','TkMinus'),
     ('left','TkMult'),
     ('right','UMINUS'),
     ('right','TkNot'),
+    ('left', 'TkApp', 'TkOpenPar'),
 )
 
 def p_program(p):
@@ -134,7 +138,6 @@ def p_while_stmt(p):
     while_node.add_child(then_node)
     p[0] = while_node
 
-# --- Lógica simplificada para IF ---
 def p_if_stmt(p):
     '''if_stmt : TkIf if_guards_list TkFi'''
     if_node = If()
@@ -157,7 +160,7 @@ def p_if_guard_clause(p):
     guard_node.add_child(p[1]) # Condición
     guard_node.add_child(p[3]) # Cuerpo
     p[0] = guard_node
-# ------------------------------------
+
 
 def p_body_sequencing(p):
     '''body_sequencing : body_stmt_item
@@ -241,12 +244,18 @@ def p_expr_atom(p):
 
 
 def p_atom(p):
-    '''atom : atom TkApp simple_atom
+    '''atom : atom TkApp simple_atom %prec TkApp
+            | atom TkOpenPar expr TkClosePar %prec TkOpenPar
             | simple_atom'''
     if len(p) == 2:
         p[0] = p[1]
-    else:
+    elif p.slice[2].type == 'TkApp':
         node = ReadFunction() 
+        node.add_child(p[1])
+        node.add_child(p[3])
+        p[0] = node
+    elif p.slice[2].type == 'TkOpenPar':
+        node = App()
         node.add_child(p[1])
         node.add_child(p[3])
         p[0] = node

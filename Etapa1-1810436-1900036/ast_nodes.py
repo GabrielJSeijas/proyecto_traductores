@@ -26,7 +26,7 @@ class ASTNode:
             node_name = "Comma"
         
         # Solo mostrar tipo para nodos específicos
-        show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print,String))
+        show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print,String,TwoPoints))
         type_info = f" | type: {self.type}" if self.type is not None and show_type else ""
         
         result = f"{prefix}{node_name}{type_info}\n"
@@ -43,7 +43,7 @@ class Block(ASTNode):
         result = f"{prefix}Block\n"
         
         # Imprimir la tabla de símbolos directamente aquí para controlar el formato.
-        if hasattr(self, 'symbol_table') and self.symbol_table and self.symbol_table.symbols:
+        if hasattr(self, 'symbol_table') and self.symbol_table:
             result += f"{prefix}-Symbols Table\n"
             for name, type_info in self.symbol_table.symbols.items():
                 result += f"{prefix}--variable: {name} | type: {type_info}\n"
@@ -117,9 +117,10 @@ class Or(ASTNode): pass
 class Not(ASTNode): pass
 class Comma(ASTNode): pass
 class TwoPoints(ASTNode): pass
-# class App(ASTNode): pass
+class App(ASTNode): pass
 class Concat(ASTNode): pass 
 class ReadFunction(ASTNode): pass
+class WriteFunction(ASTNode): pass
 
 # Sentencias
 class While(ASTNode): pass
