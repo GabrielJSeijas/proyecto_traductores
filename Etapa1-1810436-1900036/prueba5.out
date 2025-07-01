@@ -1,0 +1,46 @@
+Block
+-Symbols Table
+--variable: max_ | type: int
+--variable: i | type: int
+--variable: A | type: function[..5]
+-Sequencing
+--Sequencing
+---Asig
+----Ident: max_ | type: int
+----ReadFunction | type: int
+-----Ident: A | type: function[..5]
+-----Literal: 0 | type: int
+---Asig
+----Ident: i | type: int
+----Literal: 1 | type: int
+--While
+---Then
+----Leq | type: bool
+-----Ident: i | type: int
+-----Literal: 5 | type: int
+----Sequencing
+-----If
+------Guard
+-------Then
+--------Less | type: bool
+---------Ident: max_ | type: int
+---------ReadFunction | type: int
+----------Ident: A | type: function[..5]
+----------Ident: i | type: int
+--------Asig
+---------Ident: max_ | type: int
+---------ReadFunction | type: int
+----------Ident: A | type: function[..5]
+----------Ident: i | type: int
+-------Then
+--------Geq | type: bool
+---------Ident: max_ | type: int
+---------ReadFunction | type: int
+----------Ident: A | type: function[..5]
+----------Ident: i | type: int
+--------skip
+-----Asig
+------Ident: i | type: int
+------Plus | type: int
+-------Ident: i | type: int
+-------Literal: 1 | type: int

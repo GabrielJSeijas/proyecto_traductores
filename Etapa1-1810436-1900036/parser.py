@@ -239,13 +239,14 @@ def p_expr_atom(p):
     '''expr : atom'''
     p[0] = p[1]
 
+
 def p_atom(p):
     '''atom : atom TkApp simple_atom
             | simple_atom'''
     if len(p) == 2:
         p[0] = p[1]
     else:
-        node = App()
+        node = ReadFunction() 
         node.add_child(p[1])
         node.add_child(p[3])
         p[0] = node
@@ -265,7 +266,9 @@ def p_simple_atom(p):
         p[0] = Ident(p[1], lineno, col_offset)
     elif p.slice[1].type == 'TkNum': p[0] = Literal(p[1])
     elif p.slice[1].type in ['TkTrue', 'TkFalse']: p[0] = Literal(p[1])
-    elif p.slice[1].type == 'TkString': p[0] = String(p[1])
+    elif p.slice[1].type == 'TkString':
+        valor_con_comillas = f'"{p[1]}"'
+        p[0] = String(valor_con_comillas)
     elif p.slice[1].type == 'TkOpenPar': p[0] = p[2]
 
 def p_empty(p):

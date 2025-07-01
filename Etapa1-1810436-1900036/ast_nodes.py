@@ -17,12 +17,16 @@ class ASTNode:
         if isinstance(self, Ident):
             node_name = f"Ident: {self.name}"
         elif isinstance(self, Literal):
-            node_name = f"Literal: {self.value}"
+            node_name = f"Literal: {str(self.value).lower()}"
+        elif isinstance(self, String):
+            # Suponiendo que self.value contiene las comillas del lexer
+            # p.ej. self.value = '"First: "'
+            node_name = f"String: {self.value}"
         elif isinstance(self, Comma):
             node_name = "Comma"
         
         # Solo mostrar tipo para nodos específicos
-        show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print))
+        show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print,String))
         type_info = f" | type: {self.type}" if self.type is not None and show_type else ""
         
         result = f"{prefix}{node_name}{type_info}\n"
@@ -96,7 +100,7 @@ class String(ASTNode):
     def __init__(self, value):
         super().__init__()
         self.value = value
-        self.type = "string"
+        self.type = "String"
 
 # Operaciones
 class Plus(ASTNode): pass
@@ -113,7 +117,9 @@ class Or(ASTNode): pass
 class Not(ASTNode): pass
 class Comma(ASTNode): pass
 class TwoPoints(ASTNode): pass
-class App(ASTNode): pass
+# class App(ASTNode): pass
+class Concat(ASTNode): pass 
+class ReadFunction(ASTNode): pass
 
 # Sentencias
 class While(ASTNode): pass
@@ -124,23 +130,43 @@ class If(ASTNode):
     def __str__(self, level=0):
         prefix = '-' * level
         result = f"{prefix}If\n"
-        
-        if not self.children:
+
+        clauses = self.children
+        if not clauses:
             return result
 
-        # Imprime un único "Guard" como contenedor
-        result += f"{prefix}-Guard\n"
-        
-        # Cada hijo del nodo If es un nodo Guard que contiene una (condición, cuerpo)
-        for guard_node in self.children:
-            # Imprime "Then" para esta cláusula
-            result += f"{prefix}--Then\n"
+        num_clauses = len(clauses)
+
+        # 1. Imprimir los N-1 'Guard' anidados
+        # Para 6 cláusulas, esto imprime 5 Guards con indentación creciente.
+        for i in range(num_clauses - 1):
+            guard_prefix = '-' * (level + 1 + i)
+            result += f"{guard_prefix}Guard\n"
+
+        # 2. Imprimir todos los bloques 'Then' con la indentación especial
+        for i, clause in enumerate(clauses):
+            # Calcular el nivel de indentación para este 'Then'
+            then_level = 0
+            if i == 0:
+                # El primer 'Then' está en el nivel más profundo
+                then_level = level + 1 + (num_clauses - 1)
+            elif i == 1:
+                # El segundo 'Then' está AL MISMO NIVEL que el primero
+                then_level = level + 1 + (num_clauses - 1)
+            else:
+                # Los siguientes van subiendo un nivel cada vez
+                then_level = level + 1 + (num_clauses - i)
             
-            # Imprime la condición y el cuerpo de la cláusula
-            condition = guard_node.children[0]
-            body = guard_node.children[1]
-            result += condition.__str__(level + 3)
-            result += body.__str__(level + 3)
+            # Construir el bloque 'Then'
+            then_prefix = '-' * then_level
+            result += f"{then_prefix}Then\n"
+            
+            condition = clause.children[0]
+            body = clause.children[1]
+            
+            # Agregar el contenido del 'Then' con un nivel más de indentación
+            result += condition.__str__(then_level + 1)
+            result += body.__str__(then_level + 1)
             
         return result
 

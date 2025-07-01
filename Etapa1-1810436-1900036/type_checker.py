@@ -1,3 +1,4 @@
+import re
 from ast_nodes import *
 from symbol_table import SymbolTable
 
@@ -24,7 +25,12 @@ class TypeChecker:
         return "TYPE_ERROR"
 
     def check_node(self, node):
-        method_name = f'check_{type(node).__name__.lower()}'
+        class_name = type(node).__name__
+        if class_name == "ReadFunction":
+            method_name = "check_readfunction"
+        else:
+            method_name = f'check_{class_name.lower()}'
+            
         checker = getattr(self, method_name, self.generic_check)
         return checker(node)
 
@@ -65,23 +71,33 @@ class TypeChecker:
     def check_asig(self, node):
         ident_node = node.children[0]
         expr_node = node.children[1]
-    
+
         var_type = self.current_table.lookup(ident_node.name)
         if var_type is None:
-              return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
-    
+            return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
+
         expr_type = self.check_node(expr_node)
-    
-        if expr_type == "TYPE_ERROR": return "TYPE_ERROR"
-        
+
+        if expr_type == "TYPE_ERROR":
+            return "TYPE_ERROR"
+
+        # Comprobación especial para asignación de funciones
         is_var_func = var_type.startswith("function[..")
         is_expr_func = isinstance(expr_type, str) and expr_type.startswith("function with length=")
 
-        # Si estamos asignando una expresión de función a una variable de función,
-        # lo permitimos sin verificar la longitud, como lo implica el enunciado.
         if is_var_func and is_expr_func:
-            pass  # Asignación válida
-        # Para todos los demás casos, los tipos deben coincidir exactamente.
+            # Extraer el tamaño máximo de la declaración de la variable
+            match_var = re.search(r'\[\.\.(\d+)\]', var_type)
+            var_max_size = int(match_var.group(1)) if match_var else -1
+            
+            # Extraer la longitud de la expresión
+            match_expr = re.search(r'length=(\d+)', expr_type)
+            expr_len = int(match_expr.group(1)) if match_expr else -1
+
+            # if expr_len > var_max_size:
+            #      return self.add_error(f"Intento de asignar una función de longitud {expr_len} a la variable '{ident_node.name}' que tiene un tamaño máximo de {var_max_size}")
+        
+        # Comprobación de tipos normal para otros casos
         elif var_type != expr_type:
             return self.add_error(f"Tipo incompatible en asignación. Variable '{ident_node.name}' es de tipo {var_type} pero se le asigna {expr_type}")
 
@@ -111,7 +127,34 @@ class TypeChecker:
     def check_literal(self, node):
         return node.type
 
-    def check_plus(self, node): return self.check_arithmetic(node)
+    def check_plus(self, node):
+        left_type = self.check_node(node.children[0])
+        right_type = self.check_node(node.children[1])
+
+        # Caso 1: Ambos son enteros -> Suma aritmética
+        if left_type == "int" and right_type == "int":
+            node.type = "int"
+            return "int"
+        
+        # Caso 2: Al menos uno es string -> Concatenación
+        # Se permite concatenar string con int, bool o string.
+        valid_concat_types = ["String", "int", "bool"]
+        if left_type == "String" and right_type in valid_concat_types:
+            # ¡Transformamos el nodo!
+            node.__class__ = Concat
+            node.type = "String"
+            return "String"
+        
+        # También funciona si el string está a la derecha
+        if right_type == "String" and left_type in valid_concat_types:
+            # ¡Transformamos el nodo!
+            node.__class__ = Concat
+            node.type = "String"
+            return "String"
+
+        # Si no es ninguno de los casos anteriores, es un error.
+        return self.add_error(f"El operador '+' no se puede aplicar a los tipos {left_type} y {right_type}")
+    
     def check_minus(self, node): return self.check_arithmetic(node)
     def check_mult(self, node): return self.check_arithmetic(node)
 
@@ -196,14 +239,28 @@ class TypeChecker:
         self.check_node(body_node)
         return None
     
+    def _count_comma_elements(self, node):
+        # Esta es una función auxiliar para contar recursivamente
+        if not isinstance(node, Comma):
+            # Si no es una coma, es 1 elemento (e.g., un Literal)
+            return 1
+        
+        # Si es una coma, suma los elementos de la izquierda y la derecha
+        return self._count_comma_elements(node.children[0]) + self._count_comma_elements(node.children[1])
+
     def check_comma(self, node):
+        # Chequea los tipos de los hijos para que tengan tipo asignado
         self.check_node(node.children[0])
         self.check_node(node.children[1])
-        # El tipo especial se asigna para coincidir con la salida
-        node.type = f"function with length=2"
+        
+        # Cuenta el número total de elementos en la expresión de comas
+        count = self._count_comma_elements(node)
+        
+        # Asigna el tipo correcto con la longitud calculada
+        node.type = f"function with length={count}"
         return node.type
 
-    def check_app(self, node):
+    def check_readfunction(self, node): 
         func_node = node.children[0]
         arg_node = node.children[1]
 
@@ -211,7 +268,11 @@ class TypeChecker:
         if not (isinstance(func_type, str) and func_type.startswith("function[..")):
             return self.add_error(f"Intento de aplicar '.' a un tipo no función ({func_type})")
         
-        self.check_node(arg_node)
+        # Agrega esta validación para el argumento del acceso
+        arg_type = self.check_node(arg_node)
+        if arg_type != "int":
+            return self.add_error("El índice para el acceso a una función debe ser un entero.")
+        
         node.type = "int" # La aplicación de función siempre retorna int en este lenguaje
         return "int"
 
