@@ -222,6 +222,8 @@ def p_expr_binop(p):
     elif p[2] == ',': node = Comma()
     elif p[2] == ':': node = TwoPoints()
     else: raise ValueError(f"Operador binario desconocido: {p[2]}")
+    node.lineno = p.lineno(2)
+    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(2))
     node.add_child(p[1])
     node.add_child(p[3])
     p[0] = node
@@ -229,12 +231,16 @@ def p_expr_binop(p):
 def p_expr_uminus(p):
     'expr : TkMinus expr %prec UMINUS'
     node = Minus()
+    node.lineno = p.lineno(1) # El operador es el primer token
+    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
     node.add_child(p[2])
     p[0] = node
 
 def p_expr_not(p):
     'expr : TkNot expr'
     node = Not()
+    node.lineno = p.lineno(1) # El operador es el primer token
+    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
     node.add_child(p[2])
     p[0] = node
 
@@ -268,17 +274,27 @@ def p_simple_atom(p):
                    | TkString
                    | TkOpenPar expr TkClosePar'''
     if p.slice[1].type == 'TkId':
-        # Obtenemos la ubicación del token TkId (p[1])
         lineno = p.lineno(1)
         col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
-        # Creamos el nodo Ident con la ubicación
         p[0] = Ident(p[1], lineno, col_offset)
-    elif p.slice[1].type == 'TkNum': p[0] = Literal(p[1])
-    elif p.slice[1].type in ['TkTrue', 'TkFalse']: p[0] = Literal(p[1])
+    elif p.slice[1].type == 'TkNum':
+        lineno = p.lineno(1)
+        col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+        p[0] = Literal(p[1], lineno, col_offset) # Pasamos la ubicación
+    elif p.slice[1].type in ['TkTrue', 'TkFalse']:
+        lineno = p.lineno(1)
+        col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+        p[0] = Literal(p[1], lineno, col_offset) # Pasamos la ubicación
     elif p.slice[1].type == 'TkString':
+        # Los strings también necesitan ubicación si quieres reportar errores sobre ellos
+        lineno = p.lineno(1)
+        col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
         valor_con_comillas = f'"{p[1]}"'
         p[0] = String(valor_con_comillas)
-    elif p.slice[1].type == 'TkOpenPar': p[0] = p[2]
+        p[0].lineno = lineno
+        p[0].col_offset = col_offset
+    elif p.slice[1].type == 'TkOpenPar': 
+        p[0] = p[2]
 
 def p_empty(p):
     '''empty :'''

@@ -1,10 +1,15 @@
 class ASTNode:
-    def __init__(self):
-        self.children = []
-        self.type = None
-        self.symbol_table = None
-        self.lineno = None
-        self.col_offset = None
+    def __init__(self, value, lineno=None, col_offset=None): # Añadimos argumentos opcionales
+        super().__init__()
+        self.lineno = lineno # Los guardamos
+        self.col_offset = col_offset # Los guardamos
+
+        if isinstance(value, str) and value.lower() in ['true', 'false']:
+            self.value = value.lower() == 'true'
+            self.type = "bool"
+        else:
+            self.value = value
+            self.type = "int" if isinstance(value, int) else "unknown"
 
     def add_child(self, node):
         self.children.append(node)
@@ -87,8 +92,11 @@ class Ident(ASTNode):
         return f"{prefix}{node_name}{type_info}\n"
 
 class Literal(ASTNode):
-    def __init__(self, value):
+     def __init__(self, value, lineno=None, col_offset=None): 
         super().__init__()
+        self.lineno = lineno # Guardamos la ubicación si se proporciona
+        self.col_offset = col_offset # Guardamos la ubicación si se proporciona
+
         if isinstance(value, str) and value.lower() in ['true', 'false']:
             self.value = value.lower() == 'true'
             self.type = "bool"

@@ -24,6 +24,20 @@ class TypeChecker:
                 self.errors.append(message)
         return "TYPE_ERROR"
 
+          
+    def _find_error_node(self, start_node):
+        """Busca recursivamente el primer nodo marcado con type='TYPE_ERROR'."""
+        if getattr(start_node, 'type', None) == "TYPE_ERROR":
+            return start_node
+        
+        # El getattr es para evitar errores en nodos sin 'children'
+        for child in getattr(start_node, 'children', []):
+            found_node = self._find_error_node(child)
+            if found_node:
+                return found_node
+        return None
+
+    
     def check_node(self, node):
         class_name = type(node).__name__
         if class_name == "ReadFunction":
@@ -107,38 +121,32 @@ class TypeChecker:
         if var_type is None:
             return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
 
-
         if "function" in var_type:
             self._transform_app_to_writefunction(expr_node)
         
-
         expr_type = self.check_node(expr_node)
 
-        if expr_type == "TYPE_ERROR":
-            return "TYPE_ERROR"
-
-
-        if isinstance(expr_node, WriteFunction):
-             expr_type = self.check_node(expr_node) # Re-chequear para asignar tipo
-        
-        is_var_func = var_type.startswith("function[..")
-        is_expr_func = isinstance(expr_type, str) and expr_type.startswith("function with length=")
-
-        if is_var_func and is_expr_func:
-            match_var = re.search(r'\[\.\.(\d+)\]', var_type)
-            var_max_size = int(match_var.group(1)) if match_var else -1
+        # Si los tipos no coinciden O si la expresión tuvo un error interno...
+        if var_type != expr_type:
+            error_location_node = self._find_error_node(expr_node)
             
-            match_expr = re.search(r'length=(\d+)', expr_type)
-            expr_len = int(match_expr.group(1)) if match_expr else -1
+            line, col = None, None
+            # Si encontramos un nodo de error específico (p.ej., el '+'), usamos su ubicación.
+            if error_location_node and error_location_node.lineno is not None:
+                line = error_location_node.lineno
+                col = error_location_node.col_offset
+            else:
+                # Si no, el error es una simple incompatibilidad (ej: bool := 5).
+                # Usamos la ubicación del identificador como fallback.
+                line = ident_node.lineno
+                col = ident_node.col_offset
             
-            # (Lógica de asignación de función)
+            # Formateamos el mensaje de error que quieres
+            error_message = f"Type error at line {line} and column {col}"
+            # Pasamos el mensaje ya formateado a add_error
+            return self.add_error(error_message)
 
-        # AQUÍ ESTÁ EL CAMBIO MÁS IMPORTANTE
-        elif var_type != expr_type:
-            # Generamos el mensaje de error exacto que necesitas.
-            error_message = f"Type error. Variable {ident_node.name} has different type than expression at line {ident_node.lineno} and column {ident_node.col_offset}"
-            return self.add_error(error_message) # No es necesario pasar el nodo porque el mensaje ya está formateado.
-
+        # Si todo está bien, continuamos...
         ident_node.type = var_type
         node.type = var_type
         return var_type
@@ -200,7 +208,8 @@ class TypeChecker:
             return "String"
 
         # Si no es ninguno de los casos anteriores, es un error.
-        return self.add_error(f"El operador '+' no se puede aplicar a los tipos {left_type} y {right_type}")
+        node.type = "TYPE_ERROR"  # Marcamos este nodo 'Plus' como el origen del error
+        return "TYPE_ERROR"  
     
     def check_minus(self, node): return self.check_arithmetic(node)
     def check_mult(self, node): return self.check_arithmetic(node)
@@ -307,21 +316,39 @@ class TypeChecker:
         node.type = f"function with length={count}"
         return node.type
 
+          
     def check_readfunction(self, node): 
         func_node = node.children[0]
         arg_node = node.children[1]
 
         func_type = self.check_node(func_node)
+        if func_type == "TYPE_ERROR": # Propagar errores previos
+            return "TYPE_ERROR"
+
         if not (isinstance(func_type, str) and func_type.startswith("function[..")):
-            return self.add_error(f"Intento de aplicar '.' a un tipo no función ({func_type})")
+            return self.add_error(f"Intento de aplicar '.' a un tipo no función ({func_type})", func_node)
         
-        # Agrega esta validación para el argumento del acceso
+        # Chequeamos el tipo del argumento
         arg_type = self.check_node(arg_node)
+        
+        # Si el tipo del argumento no es entero, lanzamos el error formateado
         if arg_type != "int":
-            return self.add_error("El índice para el acceso a una función debe ser un entero.")
+            # arg_node es el nodo del índice (ej. 'true'). Ya tiene lineno y col_offset.
+            # Suponiendo que el parser le asigna la ubicación al crear el Literal.
+            line = arg_node.lineno
+            col = arg_node.col_offset
+            
+            # Construimos el mensaje de error exacto
+            error_message = f"Error. Not integer index for function at line {line} and column {col}"
+            
+            # Llamamos a add_error con el mensaje ya formateado.
+            # No es necesario pasar el nodo si el mensaje ya contiene la ubicación.
+            return self.add_error(error_message)
         
         node.type = "int" # La aplicación de función siempre retorna int en este lenguaje
         return "int"
+
+    
 
     def check_app(self, node):
         func_node = node.children[0]
