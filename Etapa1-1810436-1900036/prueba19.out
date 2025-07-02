@@ -1,1 +1,1 @@
-Error inesperado: ASTNode.__init__() missing 1 required positional argument: 'value'
+Error. Not integer index for function at line 7 and column 11

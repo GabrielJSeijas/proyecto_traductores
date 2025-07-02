@@ -105,11 +105,14 @@ def p_declare_id_list(p):
 def p_assignment_stmt(p):
     '''assignment_stmt : TkId TkAsig expr'''
     node = Asig()
-    # Obtenemos la ubicación del token TkId (p[1])
-    lineno = p.lineno(1)
-    col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
-    # Creamos el nodo Ident con la ubicación
-    node.add_child(Ident(p[1], lineno, col_offset))
+    # Guardar la ubicación del operador de asignación (token 2)
+    node.lineno = p.lineno(2)
+    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(2))
+
+    # El resto de la regla sigue igual
+    lineno_id = p.lineno(1)
+    col_offset_id = find_column(p.lexer.lexdata, p.lexpos(1))
+    node.add_child(Ident(p[1], lineno_id, col_offset_id))
     node.add_child(p[3])
     p[0] = node
 

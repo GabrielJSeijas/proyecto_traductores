@@ -1,15 +1,10 @@
 class ASTNode:
-    def __init__(self, value, lineno=None, col_offset=None): # Añadimos argumentos opcionales
+    def __init__(self, lineno=None, col_offset=None):# Añadimos argumentos opcionales
         super().__init__()
+        self.children = []  # ¡MUY IMPORTANTE! Inicializar la lista de hijos.
+        self.type = None    # El type checker lo llenará después.
         self.lineno = lineno # Los guardamos
         self.col_offset = col_offset # Los guardamos
-
-        if isinstance(value, str) and value.lower() in ['true', 'false']:
-            self.value = value.lower() == 'true'
-            self.type = "bool"
-        else:
-            self.value = value
-            self.type = "int" if isinstance(value, int) else "unknown"
 
     def add_child(self, node):
         self.children.append(node)
@@ -80,10 +75,8 @@ class Sequencing(ASTNode):
 class Asig(ASTNode): pass
 class Ident(ASTNode):
     def __init__(self, name, lineno, col_offset):
-        super().__init__()
-        self.name = name
-        self.lineno = lineno
-        self.col_offset = col_offset
+        super().__init__(lineno, col_offset)  # Pasamos la ubicación al constructor base
+        self.name = name  # Guardamos el nombre del identificador
     def __str__(self, level=0):
         # La representación en string no necesita cambiar
         prefix = '-' * level
@@ -93,9 +86,7 @@ class Ident(ASTNode):
 
 class Literal(ASTNode):
      def __init__(self, value, lineno=None, col_offset=None): 
-        super().__init__()
-        self.lineno = lineno # Guardamos la ubicación si se proporciona
-        self.col_offset = col_offset # Guardamos la ubicación si se proporciona
+        super().__init__(lineno, col_offset)
 
         if isinstance(value, str) and value.lower() in ['true', 'false']:
             self.value = value.lower() == 'true'
