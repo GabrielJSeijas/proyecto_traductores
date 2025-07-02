@@ -1,0 +1,20 @@
+Block
+-Symbols Table
+--variable: a | type: bool
+--variable: b | type: bool
+--variable: c | type: int
+-Asig
+--Ident: a | type: bool
+--Or | type: bool
+---Or | type: bool
+----Or | type: bool
+-----Literal: true | type: bool
+-----Ident: b | type: bool
+----And | type: bool
+-----And | type: bool
+------Equal | type: bool
+-------Ident: c | type: int
+-------Literal: 4 | type: int
+------Literal: false | type: bool
+-----Literal: false | type: bool
+---Ident: a | type: bool

@@ -32,7 +32,36 @@ class TypeChecker:
                 return found_node
         return None
 
-    
+    def _is_integer_list(self, node):
+        """
+        Función auxiliar recursiva.
+        Verifica que todos los elementos de una expresión de comas sean 'int'.
+        Devuelve (True, None) si es válido.
+        Devuelve (False, offending_node) si no es válido.
+        """
+        # Caso base: el nodo no es una Coma, es un elemento final.
+        if not isinstance(node, Comma):
+            # Chequeamos el tipo de este nodo hoja.
+            node_type = self.check_node(node)
+            if node_type != "int":
+                # ¡Encontramos un infractor!
+                return (False, node)
+            return (True, None)
+        
+        # Caso recursivo: el nodo es una Coma.
+        # Verificamos la rama izquierda.
+        is_left_valid, offending_node_left = self._is_integer_list(node.children[0])
+        if not is_left_valid:
+            return (False, offending_node_left)
+        
+        # Verificamos la rama derecha.
+        is_right_valid, offending_node_right = self._is_integer_list(node.children[1])
+        if not is_right_valid:
+            return (False, offending_node_right)
+
+        # Si ambas ramas son válidas, toda la sub-expresión es válida.
+        return (True, None)
+
     def check_node(self, node):
         class_name = type(node).__name__
         if class_name == "ReadFunction":
@@ -76,10 +105,26 @@ class TypeChecker:
         vars_part, type_part = decl_str.split(":", 1)
         var_names = [name.strip() for name in vars_part.split(",")]
         var_type = type_part.strip()
-        
+    
         for var_name in var_names:
-            if not self.current_table.declare(var_name, var_type):
-                self.add_error(f"Redeclaración de variable '{var_name}' en el mismo ámbito")
+        # La ubicación (línea/columna) es la del nodo 'Declare',
+        # que corresponde al inicio de la declaración (ej: 'int').
+            lineno = node.lineno
+            col_offset = node.col_offset
+        
+            # --- CAMBIO CLAVE AQUÍ ---
+            # Llamamos a `declare` con la información de ubicación.
+            previous_declaration = self.current_table.declare(var_name, var_type, lineno, col_offset)
+        
+            # Si `previous_declaration` no es None, significa que la variable ya existía.
+            if previous_declaration:
+                # `previous_declaration` es la tupla (type, lineno, col) que guardamos.
+                original_lineno = previous_declaration[1]
+            
+                # Construimos el mensaje de error apuntando a la línea ORIGINAL.
+                error_message = f"Variable {var_name} is already declared in the block at line {original_lineno}"
+                self.add_error(error_message)
+                return # Detenemos el proceso para esta línea de declaración.
     
     def check_writefunction(self, node):
         # La lógica es idéntica a la de check_app
@@ -103,42 +148,84 @@ class TypeChecker:
         ident_node = node.children[0]
         expr_node = node.children[1]
 
+        # 1. Obtener el tipo de la variable (lado izquierdo)
         var_type = self.current_table.lookup(ident_node.name)
         if var_type is None:
-            # Esto está bien, maneja el caso de variable no declarada.
-            return self.add_error(f"Variable '{ident_node.name}' not declared", ident_node)
+            error_message = f"Variable {ident_node.name} not declared at line {ident_node.lineno} and column {ident_node.col_offset}"
+            return self.add_error(error_message, ident_node)
 
+        #   2. Chequear el tipo de la expresión (lado derecho)
         expr_type = self.check_node(expr_node)
 
-        # Si los tipos no coinciden, ENTONCES y SÓLO ENTONCES manejamos el error.
-        if var_type != expr_type:
-            # --- TODO ESTE BLOQUE DEBE ESTAR INDENTADO ---
-            error_location_node = self._find_error_node(expr_node)
+        # 3. ¡PASO CRÍTICO! Si la expresión ya falló, detenerse INMEDIATAMENTE.
+        #    La función que encontró el error (ej: check_comma) ya lo reportó.
+        #    Solo debemos propagar la señal.
+        if expr_type == "TYPE_ERROR":
+            node.type = "TYPE_ERROR" # Marcar el nodo de asignación como erróneo
+            return "TYPE_ERROR"
+
+        # --- A partir de aquí, sabemos que expr_type es un tipo válido, no "TYPE_ERROR" ---
+
+        # 4. Chequear la compatibilidad de tipos
         
-            line, col = None, None
-        
-            if error_location_node and error_location_node.lineno is not None:
-                line = error_location_node.lineno
-                col = error_location_node.col_offset
-            else:
-                # Fallback a la ubicación del := si no encontramos un error más específico.
-                # Asegúrate de que tu parser guarda la ubicación en el nodo Asig.
-                line = node.lineno
-                col = node.col_offset
-        
-            error_message = f"Type error in line {line} and column {col}"
-        
+        # Si los tipos son iguales, todo bien.
+        if var_type == expr_type:
+            ident_node.type = var_type
+            node.type = var_type
+            return var_type
+
+        # Flags para legibilidad
+        is_var_function = isinstance(var_type, str) and var_type.startswith("function[..")
+        is_expr_a_list = isinstance(expr_type, str) and expr_type.startswith("function with length=")
+
+        # Chequeo específico: asignando una llamada de función a una variable no-función
+        # ej: i := x(...) donde i es int
+        if isinstance(expr_node, WriteFunction) and not is_var_function:
+            variable_name = ident_node.name
+            error_line = ident_node.lineno
+            error_col = ident_node.col_offset
+            error_message = f"Variable {variable_name} is expected to be a function at line {error_line} and column {error_col}"
+            node.type = "TYPE_ERROR"
             return self.add_error(error_message)
 
-        # Si no hubo error de tipos, continuamos normalmente.
-        ident_node.type = var_type
-        node.type = var_type
-        return var_type
+        # Chequeo específico: asignando una lista a una función (compara longitudes)
+        # ej: f := 1,2,3 donde f es function[..1]
+        if is_var_function and is_expr_a_list:
+            match_var = re.search(r'function\[\.\.(\d+)\]', var_type)
+            match_expr = re.search(r'function with length=(\d+)', expr_type)
 
-    # Si todo está bien, continuamos...
-        ident_node.type = var_type
-        node.type = var_type
-        return var_type
+            if match_var and match_expr:
+                expected_len = int(match_var.group(1)) + 1
+                actual_len = int(match_expr.group(1))
+
+                if expected_len != actual_len:
+                    error_line = expr_node.lineno
+                    error_col = expr_node.col_offset
+                    error_message = f"It is expected a list of length {expected_len} at line {error_line} and column {error_col}"
+                    node.type = "TYPE_ERROR"
+                    return self.add_error(error_message, expr_node)
+                else:
+                    # Si las longitudes coinciden, la asignación es válida.
+                    ident_node.type = var_type
+                    node.type = var_type
+                    return var_type
+
+        # Chequeo específico: asignando un entero a una función
+        # ej: f := 5 (si esto es válido en tu lenguaje)
+        if is_var_function and isinstance(expr_node, Literal) and expr_type == "int":
+            ident_node.type = var_type
+            node.type = var_type
+            return var_type
+
+        # 5. ERROR GENÉRICO (Fallback): Si ninguna de las reglas anteriores se cumplió.
+        #    Esto se activará para casos como `int i; i := true;` o `bool b; b := 5;`
+        variable_name = ident_node.name
+        error_line = ident_node.lineno
+        error_col = ident_node.col_offset
+        error_message = f"Type error. Variable {variable_name} has different type than expression at line {error_line} and column {error_col}"
+        node.type = "TYPE_ERROR"
+        return self.add_error(error_message)
+    
 
     def _count_comma_elements(self, node):
         if isinstance(node, Comma):
@@ -147,9 +234,21 @@ class TypeChecker:
         return 1 # Cualquier otro nodo es un solo elemento.
 
     def check_comma(self, node):
-        self.check_node(node.children[0])
-        self.check_node(node.children[1])
-        node.type = "function with length=2"
+        # 1. Validar que la lista esté compuesta solo por enteros.
+        is_valid, offending_node = self._is_integer_list(node)
+
+        if not is_valid:
+            # Si la lista no es de enteros, generamos el error específico.
+            # La ubicación del error es la del primer elemento no-entero.
+            error_message = f"There is no integer list at line {offending_node.lineno} and column {offending_node.col_offset}"
+            node.type = "TYPE_ERROR"
+            return self.add_error(error_message, offending_node)
+
+        # 2. Si es válida, contamos los elementos y asignamos el tipo como antes.
+        # (El chequeo de tipos de los hijos ya se hizo dentro de _is_integer_list)
+        count = self._count_comma_elements(node)
+        
+        node.type = f"function with length={count}"
         return node.type
     
     def check_twopoints(self, node):
@@ -164,7 +263,15 @@ class TypeChecker:
     def check_ident(self, node):
         var_type = self.current_table.lookup(node.name)
         if var_type is None:
-            return self.add_error(f"Variable '{node.name}' not declared", node)
+            # 1. Construir el mensaje de error con la ubicación del nodo Ident
+            error_message = f"Variable not declared at line {node.lineno} and column {node.col_offset}"
+        
+            # 2. Marcar el nodo como error para que _find_error_node pueda encontrarlo si es necesario
+            node.type = "TYPE_ERROR"
+
+            # 3. Añadir el mensaje formateado y devolver la señal de error
+            return self.add_error(error_message, node)
+        
         node.type = var_type
         return var_type
 
@@ -175,30 +282,28 @@ class TypeChecker:
         left_type = self.check_node(node.children[0])
         right_type = self.check_node(node.children[1])
 
-        # Caso 1: Ambos son enteros -> Suma aritmética
+        # 1. Propagar errores existentes de los hijos
+        if left_type == "TYPE_ERROR" or right_type == "TYPE_ERROR":
+            return "TYPE_ERROR"
+
+        # 2. Si los hijos están bien, verificar las operaciones válidas
+    
+        # Caso A: Suma de enteros
         if left_type == "int" and right_type == "int":
             node.type = "int"
             return "int"
-        
-        # Caso 2: Al menos uno es string -> Concatenación
-        # Se permite concatenar string con int, bool o string.
+    
+        # Caso B: Concatenación de strings
         valid_concat_types = ["String", "int", "bool"]
-        if left_type == "String" and right_type in valid_concat_types:
-            # ¡Transformamos el nodo!
-            node.__class__ = Concat
-            node.type = "String"
-            return "String"
-        
-        # También funciona si el string está a la derecha
-        if right_type == "String" and left_type in valid_concat_types:
-            # ¡Transformamos el nodo!
+        if (left_type == "String" and right_type in valid_concat_types) or \
+            (right_type == "String" and left_type in valid_concat_types):
             node.__class__ = Concat
             node.type = "String"
             return "String"
 
-        # Si no es ninguno de los casos anteriores, es un error.
-        node.type = "TYPE_ERROR"  # Marcamos este nodo 'Plus' como el origen del error
-        return "TYPE_ERROR"  
+        # 3. Si ninguna operación es válida, ESTE nodo es la fuente del error
+        node.type = "TYPE_ERROR"
+        return "TYPE_ERROR"
     
     def check_minus(self, node): return self.check_arithmetic(node)
     def check_mult(self, node): return self.check_arithmetic(node)
@@ -237,9 +342,17 @@ class TypeChecker:
     def check_comparison(self, node):
         left_type = self.check_node(node.children[0])
         right_type = self.check_node(node.children[1])
+
+        # 1. Propagar errores existentes
+        if left_type == "TYPE_ERROR" or right_type == "TYPE_ERROR":
+            return "TYPE_ERROR"
+
+        # 2. Generar un nuevo error si los tipos no coinciden
         if left_type != right_type:
-            node.type = "TYPE_ERROR" # Marcar el nodo
-            return "TYPE_ERROR"      # Propagar el error
+            node.type = "TYPE_ERROR" 
+            return "TYPE_ERROR"
+    
+        # 3. Si todo está bien
         node.type = "bool"
         return "bool"
         
@@ -247,13 +360,10 @@ class TypeChecker:
         left_type = self.check_node(node.children[0])
         right_type = self.check_node(node.children[1])
     
-    # --- LÓGICA CORREGIDA ---
-    # Si alguno de los hijos ya es un error, simplemente propágalo.
+  
         if left_type == "TYPE_ERROR" or right_type == "TYPE_ERROR":
             return "TYPE_ERROR"
 
-    # Si los hijos están bien pero los tipos son incorrectos para esta operación,
-    # entonces ESTE nodo es la fuente del error.
         if left_type != "int" or right_type != "int":
             node.type = "TYPE_ERROR" # Marcar este nodo como la fuente
             return "TYPE_ERROR"
@@ -303,12 +413,63 @@ class TypeChecker:
             
             cond_type = self.check_node(cond_node)
             if cond_type != "bool":
-                node.type = "TYPE_ERROR" # Marcar el nodo
-                return "TYPE_ERROR"      # Propagar el error
+                # Si la guarda no es booleana, ESTE es el punto del error.
+                # 1. Propagamos el error si ya venía de la expresión (ej: variable no declarada)
+                if cond_type == "TYPE_ERROR":
+                    return "TYPE_ERROR"
+
+                # 2. Si la expresión es válida pero de tipo incorrecto (ej: int), creamos el error aquí.
+                error_message = f"No boolean guard at line {cond_node.lineno} and column {cond_node.col_offset}"
+                node.type = "TYPE_ERROR" # Marcar el nodo 'If' como erróneo
+                # Añadimos el error y retornamos la señal para detener el chequeo.
+                return self.add_error(error_message, cond_node)     # Propagar el error
             
             self.check_node(body_node)
         return None
 
+    def _check_function_modification_args(self, arg_node):
+        """
+        Función auxiliar recursiva para validar los argumentos.
+        Devuelve None si es válido, o el NODO que causa el error en caso contrario.
+     """
+        if isinstance(arg_node, TwoPoints):
+            key_node = arg_node.children[0]
+            val_node = arg_node.children[1]
+
+            key_type = self.check_node(key_node)
+            val_type = self.check_node(val_node)
+
+        # Si la clave no es un entero, devolvemos el nodo de la clave.
+            if key_type != "int":
+                if key_type != "TYPE_ERROR": key_node.type = "TYPE_ERROR"
+                return key_node # <- Devolver el nodo erróneo
+
+        # Si el valor no es un entero, devolvemos el nodo del valor.
+            if val_type != "int":
+                if val_type != "TYPE_ERROR": val_node.type = "TYPE_ERROR"
+                return val_node # <- Devolver el nodo erróneo
+        
+        # Si todo está bien para este par, no hay error.
+            return None
+
+        elif isinstance(arg_node, Comma):
+        # Si es una coma, chequear ambas ramas y devolver el primer error que se encuentre.
+            left_error_node = self._check_function_modification_args(arg_node.children[0])
+            if left_error_node:
+                return left_error_node
+        
+            right_error_node = self._check_function_modification_args(arg_node.children[1])
+            if right_error_node:
+                return right_error_node
+            
+            return None
+
+        else:
+            # Cualquier otra cosa es un error estructural (p.ej. A(3) en lugar de A(clave:valor))
+            self.check_node(arg_node) # Chequeamos para propagar errores internos.
+            arg_node.type = "TYPE_ERROR"
+            return arg_node # Devolvemos el nodo del argumento completo
+    
     def check_while(self, node):
         # Similar a if, pero con un solo hijo 'Then'
         then_node = node.children[0]
@@ -316,10 +477,17 @@ class TypeChecker:
         body_node = then_node.children[1]
 
         cond_type = self.check_node(cond_node)
-        if cond_type != "bool":
-            node.type = "TYPE_ERROR" # Marcar el nodo
-            return "TYPE_ERROR"      # Propagar el error
         
+        # --- LÓGICA DE ERROR IDÉNTICA A check_if ---
+        if cond_type != "bool":
+            if cond_type == "TYPE_ERROR":
+                return "TYPE_ERROR"
+
+            error_message = f"No boolean guard at line {cond_node.lineno} and column {cond_node.col_offset}"
+            node.type = "TYPE_ERROR"
+            return self.add_error(error_message, cond_node)
+        # --- FIN DE LA LÓGICA DE ERROR ---
+
         self.check_node(body_node)
         return None
     
@@ -350,21 +518,36 @@ class TypeChecker:
         arg_node = node.children[1]
 
         func_type = self.check_node(func_node)
+    
+        # Propagar errores que vengan de la "función" (ej: variable no declarada)
         if func_type == "TYPE_ERROR":
             return "TYPE_ERROR"
 
+        # Ahora, el chequeo específico de indexación
         if not (isinstance(func_type, str) and func_type.startswith("function[..")):
-            node.type = "TYPE_ERROR" # Marcar y propagar
-            return "TYPE_ERROR"
-    
+            # 1. Construir el mensaje de error personalizado
+            var_name = func_node.name if isinstance(func_node, Ident) else 'expression'
+            error_message = f"Error. {var_name} is not indexable at line {func_node.lineno} and column {func_node.col_offset}"
+        
+            # 2. Marcar el nodo como la fuente del error
+            node.type = "TYPE_ERROR" 
+
+            # 3. Añadir el error y propagar la señal
+            return self.add_error(error_message, node)
+
+        # El resto de la lógica para una indexación válida
         arg_type = self.check_node(arg_node)
-    
+
+        if arg_type == "TYPE_ERROR":
+            return "TYPE_ERROR" # Propagar error del argumento
+
         if arg_type != "int":
-        # ¡La corrección! En lugar de llamar a add_error:
-            node.type = "TYPE_ERROR" # Marcar el nodo ReadFunction como la fuente
-            return "TYPE_ERROR"      # Propagar la señal de error
+            # Este es un error de tipo en el índice, el nodo ReadFunction es la fuente
+            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            node.type = "TYPE_ERROR"
+            return self.add_error(error_message, node)
     
-        node.type = "int"
+        node.type = "int" # La indexación de una función siempre devuelve un int
         return "int"
     
 
@@ -372,24 +555,29 @@ class TypeChecker:
         func_node = node.children[0]
         arg_node = node.children[1]
 
-    # Verificamos primero el nodo de la función.
         func_type = self.check_node(func_node)
 
-    # Si la función no está declarada, propagamos el error.
         if func_type == "TYPE_ERROR":
             return "TYPE_ERROR"
 
-    # Verificamos que la variable sea realmente una función.
         if not (isinstance(func_type, str) and "function" in func_type):
-            return self.add_error(f"Intento de llamar a un tipo no función ({func_type})", func_node)
+            error_message = f"The function modification operator is use in not function variable at line {func_node.lineno} and column {func_node.col_offset}"
+            node.type = "TYPE_ERROR"
+            return self.add_error(error_message, node)
     
+        # Llamamos a la función auxiliar y guardamos el resultado
+        error_node = self._check_function_modification_args(arg_node)
+
+        # Si nos devolvió un nodo, significa que hubo un error
+        if error_node:
+            # Usamos la ubicación del nodo erróneo para el mensaje
+            error_message = f"Expected expression of type int at line {error_node.lineno} and column {error_node.col_offset}"
+            node.type = "TYPE_ERROR" 
+            return self.add_error(error_message)
+    
+        # Si todo está bien, continuamos como antes
         node.__class__ = WriteFunction
-    # Verificamos los argumentos.
         self.check_node(arg_node)
-    
-    # --- LA CORRECCIÓN CLAVE ---
-    # El tipo del nodo App no es 'int', es el tipo de la función misma.
-    # Esto permite que operaciones encadenadas como f(...).i funcionen.
         node.type = func_type
         return func_type
     

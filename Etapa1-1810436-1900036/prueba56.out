@@ -1,0 +1,29 @@
+Block
+-Symbols Table
+--variable: _A | type: function[..2]
+-Sequencing
+--Asig
+---Ident: _A | type: function[..2]
+---Comma | type: function with length=3
+----Comma | type: function with length=2
+-----Literal: 1 | type: int
+-----Literal: true | type: bool
+----Literal: false | type: bool
+--Print
+---Concat | type: String
+----Concat | type: String
+-----Concat | type: String
+------Concat | type: String
+-------Concat | type: String
+--------String: "First: "
+--------ReadFunction | type: int
+---------Ident: _A | type: function[..2]
+---------Literal: 0 | type: int
+-------String: "\nSecond: "
+------ReadFunction | type: int
+-------Ident: _A | type: function[..2]
+-------Literal: 1 | type: int
+-----String: "\nThird: "
+----ReadFunction | type: int
+-----Ident: _A | type: function[..2]
+-----Literal: 2 | type: int

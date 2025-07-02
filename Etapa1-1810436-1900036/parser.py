@@ -82,7 +82,12 @@ def p_declaration_stmt(p):
     '''declaration_stmt : TkInt declare_id_list
                         | TkBool declare_id_list 
                         | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list'''
-    declare_node = Declare()
+    # 1. Crear el nodo guardando la ubicación del primer token (int, bool, etc.)
+    lineno = p.lineno(1)
+    col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+    declare_node = Declare(lineno=lineno, col_offset=col_offset)
+    
+    # 2. El resto de la lógica permanece igual
     if p[1] == 'int':
         decl_str = f"{p[2]}:int"
     elif p[1] == 'bool':
@@ -106,8 +111,9 @@ def p_assignment_stmt(p):
     '''assignment_stmt : TkId TkAsig expr'''
     node = Asig()
     # Guardar la ubicación del operador de asignación (token 2)
+    start_pos = p.lexspan(2)[0]
     node.lineno = p.lineno(2)
-    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(2))
+    node.col_offset = find_column(p.lexer.lexdata, start_pos)
 
     # El resto de la regla sigue igual
     lineno_id = p.lineno(1)
@@ -225,8 +231,9 @@ def p_expr_binop(p):
     elif p[2] == ',': node = Comma()
     elif p[2] == ':': node = TwoPoints()
     else: raise ValueError(f"Operador binario desconocido: {p[2]}")
+    start_pos = p.lexspan(2)[0]
     node.lineno = p.lineno(2)
-    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(2))
+    node.col_offset = find_column(p.lexer.lexdata, start_pos)
     node.add_child(p[1])
     node.add_child(p[3])
     p[0] = node
@@ -234,16 +241,18 @@ def p_expr_binop(p):
 def p_expr_uminus(p):
     'expr : TkMinus expr %prec UMINUS'
     node = Minus()
-    node.lineno = p.lineno(1) # El operador es el primer token
-    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+    start_pos = p.lexspan(1)[0]
+    node.lineno = p.lineno(1)
+    node.col_offset = find_column(p.lexer.lexdata, start_pos)
     node.add_child(p[2])
     p[0] = node
 
 def p_expr_not(p):
     'expr : TkNot expr'
     node = Not()
-    node.lineno = p.lineno(1) # El operador es el primer token
-    node.col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
+    start_pos = p.lexspan(1)[0]
+    node.lineno = p.lineno(1)
+    node.col_offset = find_column(p.lexer.lexdata, start_pos)
     node.add_child(p[2])
     p[0] = node
 
@@ -259,12 +268,25 @@ def p_atom(p):
     if len(p) == 2:
         p[0] = p[1]
     elif p.slice[2].type == 'TkApp':
-        node = ReadFunction() 
+        node = ReadFunction()
+        
+        # --- CAMBIO DEFINITIVO ---
+        # Usamos lexspan para obtener la posición de inicio garantizada
+        start_pos = p.lexspan(2)[0]
+        node.lineno = p.lineno(2)
+        node.col_offset = find_column(p.lexer.lexdata, start_pos)
+
         node.add_child(p[1])
         node.add_child(p[3])
         p[0] = node
     elif p.slice[2].type == 'TkOpenPar':
         node = App()
+        
+        # --- CAMBIO DEFINITIVO ---
+        start_pos = p.lexspan(2)[0]
+        node.lineno = p.lineno(2)
+        node.col_offset = find_column(p.lexer.lexdata, start_pos)
+
         node.add_child(p[1])
         node.add_child(p[3])
         p[0] = node

@@ -1,0 +1,10 @@
+Block
+-Symbols Table
+-While
+--Then
+---Literal: true | type: bool
+---While
+----Then
+-----Literal: true | type: bool
+-----Print
+------String: "hola mundo"

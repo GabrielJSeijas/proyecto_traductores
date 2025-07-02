@@ -1,0 +1,22 @@
+Block
+-Symbols Table
+--variable: a | type: int
+--variable: b | type: int
+--variable: c | type: int
+-Asig
+--Ident: a | type: int
+--Minus | type: int
+---Plus | type: int
+----Literal: 10 | type: int
+----Minus | type: int
+-----Mult | type: int
+------Plus | type: int
+-------Ident: a | type: int
+-------Minus | type: int
+--------Ident: c | type: int
+------Mult | type: int
+-------Minus | type: int
+--------Literal: 100 | type: int
+-------Literal: 2 | type: int
+-----Literal: 1 | type: int
+---Ident: b | type: int

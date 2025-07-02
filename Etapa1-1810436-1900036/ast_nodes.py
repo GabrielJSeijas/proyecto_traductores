@@ -45,8 +45,12 @@ class Block(ASTNode):
         # Imprimir la tabla de símbolos directamente aquí para controlar el formato.
         if hasattr(self, 'symbol_table') and self.symbol_table:
             result += f"{prefix}-Symbols Table\n"
-            for name, type_info in self.symbol_table.symbols.items():
+            for name, symbol_info in self.symbol_table.symbols.items():
+                # `symbol_info` es la tupla, por ejemplo: ('int', 2, 5)
+                # Extraemos solo el tipo, que es el primer elemento.
+                type_info = symbol_info[0]
                 result += f"{prefix}--variable: {name} | type: {type_info}\n"
+
         
         # Imprimir los hijos (sentencias)
         for child in self.children:
