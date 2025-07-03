@@ -1,9 +1,0 @@
-Block
--Symbols Table
---variable: b | type: int
---variable: a | type: int
--Block
---Symbols Table
----variable: a | type: bool
---Print
----Ident: b | type: int

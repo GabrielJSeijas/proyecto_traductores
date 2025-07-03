@@ -142,6 +142,8 @@ def p_while_stmt(p):
     '''while_stmt : TkWhile expr TkArrow body_sequencing TkEnd'''
     while_node = While()
     then_node = Then()
+    then_node.lineno = p.lineno(3)
+    then_node.col_offset = find_column(p.lexer.lexdata, p.lexpos(3))
     then_node.add_child(p[2])
     then_node.add_child(p[4])
     while_node.add_child(then_node)
@@ -166,6 +168,8 @@ def p_if_guards_list(p):
 def p_if_guard_clause(p):
     '''if_guard_clause : expr TkArrow body_sequencing'''
     guard_node = Guard()
+    guard_node.lineno = p.lineno(2)
+    guard_node.col_offset = find_column(p.lexer.lexdata, p.lexpos(2))
     guard_node.add_child(p[1]) # Condición
     guard_node.add_child(p[3]) # Cuerpo
     p[0] = guard_node

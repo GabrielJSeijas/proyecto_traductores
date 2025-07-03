@@ -48,18 +48,23 @@ class TypeChecker:
                 return (False, node)
             return (True, None)
         
-        # Caso recursivo: el nodo es una Coma.
-        # Verificamos la rama izquierda.
-        is_left_valid, offending_node_left = self._is_integer_list(node.children[0])
+        left_child = node.children[0]
+        right_child = node.children[1]
+
+        # 1. Verificamos la rama izquierda. Si falla, el error está "más profundo"
+        #    en la expresión, por lo que propagamos el error que nos den.
+        is_left_valid, offending_node_left = self._is_integer_list(left_child)
         if not is_left_valid:
             return (False, offending_node_left)
         
-        # Verificamos la rama derecha.
-        is_right_valid, offending_node_right = self._is_integer_list(node.children[1])
+        # 2. Verificamos la rama derecha.
+        is_right_valid, offending_node_right = self._is_integer_list(right_child)
         if not is_right_valid:
-            return (False, offending_node_right)
-
-        # Si ambas ramas son válidas, toda la sub-expresión es válida.
+            # ¡AQUÍ ESTÁ LA LÓGICA CLAVE!
+            # Si el hijo derecho es el que falla, la `Comma` actual es la que
+            # está intentando unir una lista válida con un elemento inválido.
+            # Por lo tanto, el nodo `Comma` actual es el culpable.
+            return (False, node) # Devolvemos LA COMA ACTUAL, no el hijo.
         return (True, None)
 
     def check_node(self, node):
@@ -199,11 +204,12 @@ class TypeChecker:
                 actual_len = int(match_expr.group(1))
 
                 if expected_len != actual_len:
-                    error_line = expr_node.lineno
-                    error_col = expr_node.col_offset
-                    error_message = f"It is expected a list of length {expected_len} at line {error_line} and column {error_col}"
+                    error_line = node.lineno
+                    error_col = node.col_offset
+                    
+                    error_message = f"It is expected a list of length {expected_len} at line {error_line} and column {error_col + 1}"
                     node.type = "TYPE_ERROR"
-                    return self.add_error(error_message, expr_node)
+                    return self.add_error(error_message)
                 else:
                     # Si las longitudes coinciden, la asignación es válida.
                     ident_node.type = var_type
@@ -419,7 +425,7 @@ class TypeChecker:
                     return "TYPE_ERROR"
 
                 # 2. Si la expresión es válida pero de tipo incorrecto (ej: int), creamos el error aquí.
-                error_message = f"No boolean guard at line {cond_node.lineno} and column {cond_node.col_offset}"
+                error_message = f"No boolean guard at line {guard_clause.lineno} and column {guard_clause.col_offset}"
                 node.type = "TYPE_ERROR" # Marcar el nodo 'If' como erróneo
                 # Añadimos el error y retornamos la señal para detener el chequeo.
                 return self.add_error(error_message, cond_node)     # Propagar el error
@@ -483,7 +489,7 @@ class TypeChecker:
             if cond_type == "TYPE_ERROR":
                 return "TYPE_ERROR"
 
-            error_message = f"No boolean guard at line {cond_node.lineno} and column {cond_node.col_offset}"
+            error_message = f"No boolean guard at line {then_node.lineno} and column {then_node.col_offset}"
             node.type = "TYPE_ERROR"
             return self.add_error(error_message, cond_node)
         # --- FIN DE LA LÓGICA DE ERROR ---
@@ -499,19 +505,6 @@ class TypeChecker:
         
         # Si es una coma, suma los elementos de la izquierda y la derecha
         return self._count_comma_elements(node.children[0]) + self._count_comma_elements(node.children[1])
-
-    def check_comma(self, node):
-        # Chequea los tipos de los hijos para que tengan tipo asignado
-        self.check_node(node.children[0])
-        self.check_node(node.children[1])
-        
-        # Cuenta el número total de elementos en la expresión de comas
-        count = self._count_comma_elements(node)
-        
-        # Asigna el tipo correcto con la longitud calculada
-        node.type = f"function with length={count}"
-        return node.type
-
           
     def check_readfunction(self, node): 
         func_node = node.children[0]

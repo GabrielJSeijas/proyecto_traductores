@@ -1,7 +1,0 @@
-Block
--Symbols Table
--Block
---Symbols Table
----variable: a | type: bool
---Print
----Ident: a | type: bool
