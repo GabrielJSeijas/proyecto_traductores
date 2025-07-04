@@ -12,11 +12,10 @@ class SymbolTable:
         - Si no existe, lo añade y devuelve None.
         """
         if name in self.symbols:
-            return self.symbols[name]  # Devuelve la info de la declaración previa
+            return self.symbols[name]  #Devolvemos la info de la declaración previa
         
-        self.symbols[name] = (type_info, lineno, col_offset) # Almacena la tupla completa
-        return None # Éxito, no había declaración previa
-
+        self.symbols[name] = (type_info, lineno, col_offset) #Almacena la tupla completa
+        return None #no hay declaración previa
 
     def lookup(self, name):
         """

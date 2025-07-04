@@ -1,8 +1,8 @@
 class ASTNode:
     def __init__(self, lineno=None, col_offset=None):# Añadimos argumentos opcionales
         super().__init__()
-        self.children = []  # ¡MUY IMPORTANTE! Inicializar la lista de hijos.
-        self.type = None    # El type checker lo llenará después.
+        self.children = []  # Lista de hijos del nodo
+        self.type = None    # Tipo del nodo, por defecto None
         self.lineno = lineno # Los guardamos
         self.col_offset = col_offset # Los guardamos
 
@@ -19,13 +19,12 @@ class ASTNode:
         elif isinstance(self, Literal):
             node_name = f"Literal: {str(self.value).lower()}"
         elif isinstance(self, String):
-            # Suponiendo que self.value contiene las comillas del lexer
-            # p.ej. self.value = '"First: "'
+            # Suponiendo que self.value contiene las comillas del lexer '"First: "'
             node_name = f"String: {self.value}"
         elif isinstance(self, Comma):
             node_name = "Comma"
         
-        # Solo mostrar tipo para nodos específicos
+        #Solo mostrar type para nodos específicos
         show_type = not isinstance(self, (Sequencing, Asig, Guard, Then, Print,String,TwoPoints))
         type_info = f" | type: {self.type}" if self.type is not None and show_type else ""
         
@@ -42,11 +41,10 @@ class Block(ASTNode):
         prefix = '-' * level
         result = f"{prefix}Block\n"
         
-        # Imprimir la tabla de símbolos directamente aquí para controlar el formato.
+        # Imprimimos la tabla de símbolos directamente aquí para controlar el formato.
         if hasattr(self, 'symbol_table') and self.symbol_table:
             result += f"{prefix}-Symbols Table\n"
             for name, symbol_info in self.symbol_table.symbols.items():
-                # `symbol_info` es la tupla, por ejemplo: ('int', 2, 5)
                 # Extraemos solo el tipo, que es el primer elemento.
                 type_info = symbol_info[0]
                 result += f"{prefix}--variable: {name} | type: {type_info}\n"
@@ -59,7 +57,6 @@ class Block(ASTNode):
         return result
 
 class Declare(ASTNode):
-    # Esta clase es un marcador, no se imprime en el AST final.
     def __str__(self, level=0):
         return ""
 
@@ -141,24 +138,23 @@ class If(ASTNode):
 
         num_clauses = len(clauses)
 
-        # 1. Imprimir los N-1 'Guard' anidados
-        # Para 6 cláusulas, esto imprime 5 Guards con indentación creciente.
+        # Imprimir los N-1 'Guard' anidados
         for i in range(num_clauses - 1):
             guard_prefix = '-' * (level + 1 + i)
             result += f"{guard_prefix}Guard\n"
 
-        # 2. Imprimir todos los bloques 'Then' con la indentación especial
+        # Imprimir todos los bloques 'Then' con la indentación especial
         for i, clause in enumerate(clauses):
             # Calcular el nivel de indentación para este 'Then'
             then_level = 0
             if i == 0:
-                # El primer 'Then' está en el nivel más profundo
+                #El primer 'Then' está en el nivel más profundo
                 then_level = level + 1 + (num_clauses - 1)
             elif i == 1:
-                # El segundo 'Then' está AL MISMO NIVEL que el primero
+                #El segundo 'Then' está AL MISMO NIVEL que el primero
                 then_level = level + 1 + (num_clauses - 1)
             else:
-                # Los siguientes van subiendo un nivel cada vez
+                #Los siguientes van subiendo un nivel cada vez
                 then_level = level + 1 + (num_clauses - i)
             
             # Construir el bloque 'Then'
@@ -176,7 +172,6 @@ class If(ASTNode):
 
 
 class Guard(ASTNode):
-    # Esta clase es un contenedor para (condición, cuerpo), no se imprime directamente.
     pass
 
 class Print(ASTNode): pass

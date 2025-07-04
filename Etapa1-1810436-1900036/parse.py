@@ -6,6 +6,7 @@ from type_checker import TypeChecker
 from symbol_table import SymbolTable
 
 def main():
+    # Verificar que se ha pasado un argumento de línea de comandos
     if len(sys.argv) != 2:
         print("Usage: python parse.py <filename.imperat>")
         sys.exit(1)
@@ -14,7 +15,8 @@ def main():
     if not filename.endswith('.imperat'):
         print("Error: El archivo debe tener extensión .imperat")
         sys.exit(1)
-        
+    
+    # Verificar que el archivo existe y no está vacío
     try:
         with open(filename, 'r') as file:
             data = file.read()

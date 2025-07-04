@@ -1,5 +1,3 @@
-
-
 import os
 import ply.yacc as yacc
 from lexer import tokens
@@ -82,12 +80,11 @@ def p_declaration_stmt(p):
     '''declaration_stmt : TkInt declare_id_list
                         | TkBool declare_id_list 
                         | TkFunction TkOBracket TkSoForth TkNum TkCBracket declare_id_list'''
-    # 1. Crear el nodo guardando la ubicación del primer token (int, bool, etc.)
+    #Creamos el nodo guardando la ubicación del primer token (int, bool, etc.)
     lineno = p.lineno(1)
     col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
     declare_node = Declare(lineno=lineno, col_offset=col_offset)
     
-    # 2. El resto de la lógica permanece igual
     if p[1] == 'int':
         decl_str = f"{p[2]}:int"
     elif p[1] == 'bool':
@@ -110,12 +107,11 @@ def p_declare_id_list(p):
 def p_assignment_stmt(p):
     '''assignment_stmt : TkId TkAsig expr'''
     node = Asig()
-    # Guardar la ubicación del operador de asignación (token 2)
+    #Guardar la ubicación del operador de asignación (token 2)
     start_pos = p.lexspan(2)[0]
     node.lineno = p.lineno(2)
     node.col_offset = find_column(p.lexer.lexdata, start_pos)
 
-    # El resto de la regla sigue igual
     lineno_id = p.lineno(1)
     col_offset_id = find_column(p.lexer.lexdata, p.lexpos(1))
     node.add_child(Ident(p[1], lineno_id, col_offset_id))
@@ -187,11 +183,11 @@ def p_body_sequencing(p):
             seq_node.add_child(p[1])
             p[0] = seq_node
     else:
-        # Si el lado derecho ya es una secuencia, agregar al inicio
+        #Si el lado derecho ya es una secuencia, agregar al inicio
         if isinstance(p[3], Sequencing):
             p[3].children.insert(0, p[1])
             p[0] = p[3]
-        else: # Si no, crear una nueva secuencia
+        else: #Si no, crear una nueva secuencia
             seq_node = Sequencing()
             seq_node.add_child(p[1])
             seq_node.add_child(p[3])
@@ -274,7 +270,6 @@ def p_atom(p):
     elif p.slice[2].type == 'TkApp':
         node = ReadFunction()
         
-        # --- CAMBIO DEFINITIVO ---
         # Usamos lexspan para obtener la posición de inicio garantizada
         start_pos = p.lexspan(2)[0]
         node.lineno = p.lineno(2)
@@ -286,7 +281,6 @@ def p_atom(p):
     elif p.slice[2].type == 'TkOpenPar':
         node = App()
         
-        # --- CAMBIO DEFINITIVO ---
         start_pos = p.lexspan(2)[0]
         node.lineno = p.lineno(2)
         node.col_offset = find_column(p.lexer.lexdata, start_pos)
