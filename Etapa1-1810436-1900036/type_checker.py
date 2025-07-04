@@ -38,30 +38,30 @@ class TypeChecker:
         """
         Función auxiliar recursiva.
         Verifica que todos los elementos de una expresión de comas sean 'int'.
-        Devuelve (True, None) si es válido.
-        Devuelve (False, offending_node) si no es válido.
+        ASUME que los hijos ya han sido procesados por check_node.
         """
-        # Caso base: el nodo no es una Coma, es un elemento final.
         if not isinstance(node, Comma):
-            # Chequeamos el tipo de este nodo hoja.
-            node_type = self.check_node(node)
-            if node_type != "int":
-                # Si no es un entero, devolvemos este nodo como el culpable.
+            # En el caso base, el tipo ya debería estar establecido.
+            if node.type != "int":
                 return (False, node)
             return (True, None)
-        
+    
+        # Si es una coma, sus hijos ya tienen su tipo (o son comas anidadas).
+        # Simplemente validamos recursivamente.
         left_child = node.children[0]
         right_child = node.children[1]
 
-        # Verificamos la rama izquierda. Si falla, el error está "más profundo" en la expresión, por lo que propagamos el error que nos den.
+        # Verificamos la rama izquierda. Si falla, el error está mas abajo
         is_left_valid, offending_node_left = self._is_integer_list(left_child)
         if not is_left_valid:
             return (False, offending_node_left)
-        
+    
         # Verificamos la rama derecha.
         is_right_valid, offending_node_right = self._is_integer_list(right_child)
         if not is_right_valid:
-            return (False, node) # Devolvemos LA COMA ACTUAL, no el hijo.
+            # Si la rama derecha es inválida, el nodo actual (la coma) es el culpable.
+            return (False, node) 
+        
         return (True, None)
 
     def check_node(self, node):
@@ -104,6 +104,16 @@ class TypeChecker:
 
     def check_declare(self, node):
         decl_str = node.children[0]
+        if "function" in decl_str:
+            match = re.search(r'function\[\.\.(-?\d+)\]', decl_str)
+            if match:
+                upper_bound = int(match.group(1))
+                if upper_bound < 0:
+                    error_line = node.bound_lineno if node.bound_lineno is not None else node.lineno
+                    error_col = node.bound_col_offset if node.bound_col_offset is not None else node.col_offset
+                    error_message = f"Error: lower bound of the interval greater than the upper bound at line {error_line} and column {error_col}"
+                    return self.add_error(error_message, node)
+                
         vars_part, type_part = decl_str.split(":", 1)
         var_names = [name.strip() for name in vars_part.split(",")]
         var_type = type_part.strip()
@@ -117,9 +127,9 @@ class TypeChecker:
             # Declarar la variable en la tabla de símbolos
             previous_declaration = self.current_table.declare(var_name, var_type, lineno, col_offset)
         
-            # Si `previous_declaration` no es None, significa que la variable ya existía.
+            # Si 'previous_declaration' no es None, significa que la variable ya existía.
             if previous_declaration:
-                # `previous_declaration` es la tupla (type, lineno, col) que guardamos.
+                # 'previous_declaration' es la tupla (type, lineno, col) que guardamos.
                 original_lineno = previous_declaration[1]
             
                 # Construimos el mensaje de error apuntando a la línea ORIGINAL.
@@ -163,8 +173,7 @@ class TypeChecker:
             return "TYPE_ERROR"
 
         #A partir de aquí, sabemos que expr_type es un tipo válido, no "TYPE_ERROR"
-
-        # Comprobamos si los tipos coinciden.
+        #Ahora Comprobamos si los tipos coinciden.
         if var_type == expr_type:
             ident_node.type = var_type
             node.type = var_type
@@ -214,7 +223,6 @@ class TypeChecker:
             return var_type
 
         # ERROR GENÉRICO Si ninguna de las reglas anteriores se cumplió.
-        
         variable_name = ident_node.name
         error_line = ident_node.lineno
         error_col = ident_node.col_offset
@@ -230,18 +238,21 @@ class TypeChecker:
         return 1 # Cualquier otro nodo es un solo elemento.
 
     def check_comma(self, node):
-        # Validar que la lista esté compuesta solo por enteros.
+        # Aseguramos un recorrido post-orden llamando a check_node en los hijos PRIMERO.
+        # Esto garantiza que cuando lleguemos a la validación, los hijos ya tengan su tipo.
+        self.check_node(node.children[0])
+        self.check_node(node.children[1])
+
+        # Ahora, realizar la validación con la función auxiliar.
         is_valid, offending_node = self._is_integer_list(node)
 
         if not is_valid:
-            # Si la lista no es de enteros, generamos el error específico.
             error_message = f"There is no integer list at line {offending_node.lineno} and column {offending_node.col_offset}"
             node.type = "TYPE_ERROR"
             return self.add_error(error_message, offending_node)
 
-        # Si es válida, contamos los elementos y asignamos el tipo como antes.
+        #Contar los elementos y asignar el tipo al nodo actual.
         count = self._count_comma_elements(node)
-        
         node.type = f"function with length={count}"
         return node.type
     
@@ -295,7 +306,8 @@ class TypeChecker:
 
         # Si ninguna operación es válida, ESTE nodo es la fuente del error
         node.type = "TYPE_ERROR"
-        return "TYPE_ERROR"
+        error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+        return self.add_error(error_message, node)
     
     def check_minus(self, node): return self.check_arithmetic(node)
     def check_mult(self, node): return self.check_arithmetic(node)
@@ -310,7 +322,8 @@ class TypeChecker:
 
             if left_type != "int" or right_type != "int":
                 node.type = "TYPE_ERROR" # Error en este nodo
-                return "TYPE_ERROR"
+                error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+                return self.add_error(error_message)
         else: # Operador Unario
             child_type = self.check_node(node.children[0])
 
@@ -318,12 +331,14 @@ class TypeChecker:
                 return "TYPE_ERROR" # Propagar error de hijo
 
             if child_type != "int":
-                node.type = "TYPE_ERROR" # Error en este nodo
-                return "TYPE_ERROR"
+                node.type = "TYPE_ERROR"
+                error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+                return self.add_error(error_message, node)
     
         node.type = "int"
         return "int"
 
+    # Comprobaciones de comparación
     def check_equal(self, node): return self.check_comparison(node)
     def check_notequal(self, node): return self.check_comparison(node)
     def check_less(self, node): return self.check_comparison_int(node)
@@ -331,34 +346,37 @@ class TypeChecker:
     def check_leq(self, node): return self.check_comparison_int(node)
     def check_geq(self, node): return self.check_comparison_int(node)
     
-    def check_comparison(self, node):
+    def check_comparison(self, node): # Para == y <>
         left_type = self.check_node(node.children[0])
         right_type = self.check_node(node.children[1])
 
-        #Propagamos errores existentes
+        # Propagamos errores existentes
         if left_type == "TYPE_ERROR" or right_type == "TYPE_ERROR":
+            node.type = "TYPE_ERROR"
             return "TYPE_ERROR"
 
-        #Generamos un nuevo error si los tipos no coinciden
+        # Generamos un nuevo error si los tipos no coinciden
         if left_type != right_type:
             node.type = "TYPE_ERROR" 
-            return "TYPE_ERROR"
+            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            return self.add_error(error_message, node)
     
-        #imprimimos todo está correcto
         node.type = "bool"
         return "bool"
     
     # Comprobación específica para comparaciones con enteros
-    def check_comparison_int(self, node):
+    def check_comparison_int(self, node): # Para <, >, <=, >=
         left_type = self.check_node(node.children[0])
         right_type = self.check_node(node.children[1])
     
         if left_type == "TYPE_ERROR" or right_type == "TYPE_ERROR":
+            node.type = "TYPE_ERROR"
             return "TYPE_ERROR"
 
         if left_type != "int" or right_type != "int":
             node.type = "TYPE_ERROR" 
-            return "TYPE_ERROR"
+            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            return self.add_error(error_message, node)
 
         node.type = "bool"
         return "bool"
@@ -378,7 +396,10 @@ class TypeChecker:
         #Comprobamos si este nodo causa un nuevo error
         if left_type != "bool" or right_type != "bool":
             node.type = "TYPE_ERROR"
-            return "TYPE_ERROR"
+            # Creamos el mensaje usando la ubicación del operador 'and'/'or'
+            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            # Añadimos el error y retornamos la señal
+            return self.add_error(error_message, node)
         
         node.type = "bool"
         return "bool"
@@ -387,10 +408,18 @@ class TypeChecker:
 
     def check_not(self, node):
         child_type = self.check_node(node.children[0])
+    
+        # Si el hijo ya tuvo un error (ej. variable no declarada), propagamos
+        if child_type == "TYPE_ERROR":
+            node.type = "TYPE_ERROR"
+            return "TYPE_ERROR"
+
+        # Si el hijo es de tipo incorrecto, ESTE nodo es la fuente del error
         if child_type != "bool":
             node.type = "TYPE_ERROR"
-            return "TYPE_ERROR" 
-        
+            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            return self.add_error(error_message, node)
+    
         node.type = "bool"
         return "bool"
 
@@ -403,11 +432,11 @@ class TypeChecker:
             cond_type = self.check_node(cond_node)
             if cond_type != "bool":
                 # Si la guarda no es booleana, este es el error.
-                # Propagamos el error si ya venía de la expresión (ej: variable not declared)
+                # Propagamos el error si ya venía de la expresión (Variable not declared)
                 if cond_type == "TYPE_ERROR":
                     return "TYPE_ERROR"
 
-                # Si la expresión es válida pero de tipo incorrecto (ej: int), creamos el error aquí.
+                # Si la expresión es válida pero de tipo incorrecto (ej: int) creamos el error aquí.
                 error_message = f"No boolean guard at line {guard_clause.lineno} and column {guard_clause.col_offset}"
                 node.type = "TYPE_ERROR" # Marcar el nodo 'If' como erróneo
                 # Añadimos el error y retornamos la señal para detener el chequeo.
@@ -520,10 +549,9 @@ class TypeChecker:
             return "TYPE_ERROR" # Propagar error del argumento
 
         if arg_type != "int":
-            # Este es un error de tipo en el índice, el nodo ReadFunction es la fuente
-            error_message = f"Type error in line {node.lineno} and column {node.col_offset}"
+            error_message = f"Error. Not integer index for function at line {arg_node.lineno} and column {arg_node.col_offset}"
             node.type = "TYPE_ERROR"
-            return self.add_error(error_message, node)
+            return self.add_error(error_message, arg_node)
     
         node.type = "int" # La indexación de una función siempre devuelve un int
         return "int"
@@ -561,25 +589,6 @@ class TypeChecker:
         self.check_node(arg_node)
         node.type = func_type
         return func_type
-    
-    # Esta función transforma los nodos 'Plus' con hijos 'int' en 'Concat'
-    # cuando se encuentran dentro de un nodo 'Print'.
-    def _transform_plus_to_concat_in_print(self, node):
-        """
-        Recorre un subárbol (post-orden) y transforma los nodos 'Plus'
-        con hijos 'int' en 'Concat'.
-        """
-        for child in node.children:
-            self._transform_plus_to_concat_in_print(child)
-        
-        if isinstance(node, Plus):
-            # Los hijos ya han sido procesados y tienen su tipo asignado
-            left_type = node.children[0].type
-            right_type = node.children[1].type
-            
-            if left_type == 'int' and right_type == 'int':
-                node.__class__ = Concat
-                node.type = "String"
 
     def check_print(self, node):
         expr_node = node.children[0]
@@ -588,9 +597,6 @@ class TypeChecker:
         expr_type = self.check_node(expr_node)
         if expr_type == "TYPE_ERROR":
             return expr_type # Propagar el error
-
-        #Aplicamos la regla especial de transformación para 'print'.
-        self._transform_plus_to_concat_in_print(expr_node)
 
         # El tipo del nodo 'print' es el tipo final de la expresión.
         # Si hubo una transformación, el tipo de expr_node ahora es String.

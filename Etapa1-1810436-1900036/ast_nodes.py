@@ -1,5 +1,5 @@
 class ASTNode:
-    def __init__(self, lineno=None, col_offset=None):# Añadimos argumentos opcionales
+    def __init__(self, lineno=None, col_offset=None,):# Añadimos argumentos opcionales
         super().__init__()
         self.children = []  # Lista de hijos del nodo
         self.type = None    # Tipo del nodo, por defecto None
@@ -57,6 +57,13 @@ class Block(ASTNode):
         return result
 
 class Declare(ASTNode):
+    def __init__(self, lineno=None, col_offset=None, end_lineno=None, end_col_offset=None,bound_lineno=None, bound_col_offset=None):
+        super().__init__(lineno, col_offset)
+        self.end_lineno = end_lineno
+        self.end_col_offset = end_col_offset
+        self.bound_lineno = bound_lineno
+        self.bound_col_offset = bound_col_offset
+
     def __str__(self, level=0):
         return ""
 

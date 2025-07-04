@@ -83,8 +83,11 @@ def p_declaration_stmt(p):
     #Creamos el nodo guardando la ubicación del primer token (int, bool, etc.)
     lineno = p.lineno(1)
     col_offset = find_column(p.lexer.lexdata, p.lexpos(1))
-    declare_node = Declare(lineno=lineno, col_offset=col_offset)
     
+    end_lineno = None
+    end_col_offset = None
+    bound_lineno = None      
+    bound_col_offset = None 
     if p[1] == 'int':
         decl_str = f"{p[2]}:int"
     elif p[1] == 'bool':
@@ -92,6 +95,17 @@ def p_declaration_stmt(p):
     else:
         num_val = p[4]
         decl_str = f"{p[6]}:function[..{num_val}]"
+        end_lineno = p.lineno(5)
+        end_col_offset = find_column(p.lexer.lexdata, p.lexpos(5))
+        bound_lineno = p.lineno(3)
+        bound_col_offset = find_column(p.lexer.lexdata, p.lexpos(3))
+    
+    declare_node = Declare(lineno=lineno, 
+        col_offset=col_offset,
+        end_lineno=end_lineno,
+        end_col_offset=end_col_offset,
+        bound_lineno=bound_lineno,         
+        bound_col_offset=bound_col_offset)
     
     declare_node.add_child(decl_str)
     p[0] = declare_node

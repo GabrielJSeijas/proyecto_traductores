@@ -81,7 +81,7 @@ def t_TkNEqual(t):
 
 # Definición de los tokens de palabras reservadas
 def t_TkNum(t):
-    r'\d+'
+    r'-?\d+'
     t.value = int(t.value)
     return t
 # Definición de identificadores
